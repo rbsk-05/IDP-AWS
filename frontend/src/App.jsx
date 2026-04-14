@@ -1,120 +1,137 @@
 import React, { useState, useEffect } from "react";
 
-const API_BASE =
-  "https://tymn5ur022.execute-api.ap-southeast-1.amazonaws.com/prod/api";
+const API_BASE = "https://tymn5ur022.execute-api.ap-southeast-1.amazonaws.com/prod/api";
 
 const theme = {
   page: {
-    fontFamily: "'Inter', system-ui, sans-serif",
+    fontFamily: "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
     margin: 0,
     padding: 0,
     minHeight: "100vh",
-    background:
-      "linear-gradient(180deg, #111827 0%, #1f2937 45%, #111827 100%)",
-    color: "#e5e7eb",
+    backgroundColor: "#f5f5f7",
+    color: "#1d1d1f",
+    WebkitFontSmoothing: "antialiased",
   },
   frame: {
-    maxWidth: "1100px",
-    margin: "2rem auto",
-    padding: "0 1.5rem",
+    maxWidth: "1024px",
+    margin: "0 auto",
+    padding: "2rem 1.5rem",
   },
   header: {
     container: {
-      background: "rgba(15, 23, 42, 0.9)",
-      border: "1px solid rgba(255,255,255,0.08)",
-      borderRadius: "18px",
-      padding: "1.2rem 1.5rem",
-      marginBottom: "1.75rem",
+      padding: "1rem 0 3rem",
       display: "flex",
-      justifyContent: "space-between",
+      flexDirection: "column",
       alignItems: "center",
-      gap: "1rem",
-      backdropFilter: "blur(14px)",
+      textAlign: "center",
+      gap: "1.5rem",
     },
     title: {
       margin: 0,
-      fontSize: "1.85rem",
-      fontWeight: 800,
-      letterSpacing: "-0.03em",
-      lineHeight: 1.05,
-      background: "linear-gradient(90deg, #a855f7, #38bdf8)",
-      WebkitBackgroundClip: "text",
-      WebkitTextFillColor: "transparent",
+      fontSize: "3rem",
+      fontWeight: 700,
+      letterSpacing: "-0.015em",
+      color: "#1d1d1f",
     },
     subtitle: {
-      margin: "0.4rem 0 0",
-      fontSize: "0.95rem",
-      color: "rgba(229,231,235,0.7)",
+      margin: "0.5rem 0 0",
+      fontSize: "1.2rem",
+      fontWeight: 400,
+      color: "#86868b",
+      maxWidth: "500px",
     },
-    tabs: {
+    tabsContainer: {
       display: "flex",
-      gap: "0.75rem",
-      flexWrap: "wrap",
+      background: "#e3e3e8",
+      borderRadius: "999px",
+      padding: "0.25rem",
+      gap: "0.25rem",
     },
   },
   section: {
     card: {
-      background: "rgba(255,255,255,0.04)",
-      border: "1px solid rgba(255,255,255,0.08)",
+      background: "#ffffff",
       borderRadius: "18px",
-      padding: "1.5rem",
-      overflow: "hidden",
+      padding: "2rem",
+      boxShadow: "0 4px 24px rgba(0,0,0,0.04)",
+      border: "1px solid rgba(0,0,0,0.02)",
     },
     title: {
       margin: 0,
-      fontSize: "1.35rem",
-      fontWeight: 700,
-      color: "#f8fafc",
+      fontSize: "1.5rem",
+      fontWeight: 600,
+      letterSpacing: "-0.01em",
+      color: "#1d1d1f",
     },
     description: {
       margin: "0.5rem 0 0",
-      color: "rgba(229,231,235,0.68)",
-      fontSize: "0.95rem",
+      color: "#86868b",
+      fontSize: "1rem",
     },
   },
   button: {
     primary: {
-      padding: "0.75rem 1.25rem",
-      borderRadius: "12px",
-      border: "none",
-      cursor: "pointer",
-      fontWeight: 700,
-      fontSize: "0.95rem",
-      transition: "transform 0.18s ease, box-shadow 0.18s ease",
-      background: "linear-gradient(135deg, #8b5cf6, #38bdf8)",
-      color: "#fff",
-    },
-    secondary: {
-      padding: "0.75rem 1.25rem",
-      borderRadius: "12px",
-      border: "1px solid rgba(255,255,255,0.12)",
-      background: "rgba(255,255,255,0.06)",
-      color: "#e5e7eb",
-      cursor: "pointer",
-    },
-    pill: {
-      padding: "0.6rem 1rem",
+      padding: "0.8rem 1.5rem",
       borderRadius: "999px",
       border: "none",
       cursor: "pointer",
-      fontWeight: 700,
-      fontSize: "0.88rem",
+      fontWeight: 500,
+      fontSize: "0.95rem",
+      background: "#0071e3",
+      color: "#fff",
+      transition: "all 0.2s ease",
+    },
+    secondary: {
+      padding: "0.8rem 1.5rem",
+      borderRadius: "999px",
+      border: "none",
+      background: "#e8e8ed",
+      color: "#1d1d1f",
+      cursor: "pointer",
+      fontWeight: 500,
+      fontSize: "0.95rem",
+      transition: "all 0.2s ease",
+    },
+    pillActive: {
+      padding: "0.6rem 1.25rem",
+      borderRadius: "999px",
+      border: "none",
+      cursor: "pointer",
+      fontWeight: 500,
+      fontSize: "0.95rem",
+      background: "#ffffff",
+      color: "#1d1d1f",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
+      transition: "all 0.2s ease",
+    },
+    pillInactive: {
+      padding: "0.6rem 1.25rem",
+      borderRadius: "999px",
+      border: "none",
+      cursor: "pointer",
+      fontWeight: 500,
+      fontSize: "0.95rem",
+      background: "transparent",
+      color: "#86868b",
+      transition: "all 0.2s ease",
     },
   },
   input: {
     base: {
       width: "100%",
-      padding: "0.85rem 1rem",
-      borderRadius: "14px",
-      border: "1px solid rgba(255,255,255,0.12)",
-      background: "rgba(255,255,255,0.06)",
-      color: "#f8fafc",
-      fontSize: "0.98rem",
+      padding: "1rem 1.25rem",
+      borderRadius: "12px",
+      border: "1px solid #d2d2d7",
+      background: "#ffffff",
+      color: "#1d1d1f",
+      fontSize: "1.05rem",
       outline: "none",
+      transition: "all 0.2s ease",
+      boxSizing: "border-box"
     },
   },
   textMuted: {
-    color: "rgba(229,231,235,0.65)",
+    color: "#86868b",
   },
 };
 
@@ -150,7 +167,7 @@ function App() {
     setError(null);
     try {
       const res = await fetch(
-        `${API_BASE}/search?q=${encodeURIComponent(searchQuery)}`,
+        `${API_BASE}/search?q=${encodeURIComponent(searchQuery)}`
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -185,7 +202,7 @@ function App() {
       const existing = items.find((i) => i.productId === product.id);
       const updatedItems = existing
         ? items.map((i) =>
-            i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i,
+            i.productId === product.id ? { ...i, quantity: i.quantity + 1 } : i
           )
         : [
             ...items,
@@ -206,7 +223,7 @@ function App() {
       setCartStatus((prev) => ({ ...prev, [product.id]: "added" }));
       setTimeout(
         () => setCartStatus((prev) => ({ ...prev, [product.id]: null })),
-        1500,
+        1500
       );
     } catch (err) {
       setCartStatus((prev) => ({ ...prev, [product.id]: "error" }));
@@ -277,7 +294,7 @@ function App() {
 
   const cartTotal = cart.reduce(
     (sum, item) => sum + parseFloat(item.price || 0) * item.quantity,
-    0,
+    0
   );
   const cartQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -285,25 +302,13 @@ function App() {
     <div style={theme.page}>
       <div style={theme.frame}>
         <header style={theme.header.container}>
-          <div>
-            <span
-              style={{
-                ...theme.textMuted,
-                fontSize: "0.85rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.14em",
-              }}
-            >
-              Store dashboard
-            </span>
-            <h1 style={theme.header.title}>IDP Serverless Store</h1>
-            <p style={theme.header.subtitle}>
-              Clean, professional UI for your product catalog and cart
-              experience.
-            </p>
-          </div>
+          <span style={{ fontSize: "0.85rem", textTransform: "uppercase", letterSpacing: "0.14em", color: "#86868b", fontWeight: 600 }}>Store Framework</span>
+          <h1 style={theme.header.title}>IDP Serverless Store</h1>
+          <p style={theme.header.subtitle}>
+            A modern, serverless microservices architecture with an intuitive aesthetic layout.
+          </p>
 
-          <div style={theme.header.tabs}>
+          <div style={theme.header.tabsContainer}>
             {["products", "cart", "admin"].map((tab) => (
               <button
                 key={tab}
@@ -311,21 +316,12 @@ function App() {
                   setActiveTab(tab);
                   if (tab !== "admin") cancelEdit();
                 }}
-                style={{
-                  ...theme.button.pill,
-                  background:
-                    activeTab === tab ? "#4f46e5" : "rgba(255,255,255,0.06)",
-                  color: activeTab === tab ? "#fff" : "#d1d5db",
-                  boxShadow:
-                    activeTab === tab
-                      ? "0 10px 30px rgba(79,70,229,0.18)"
-                      : "none",
-                }}
+                style={activeTab === tab ? theme.button.pillActive : theme.button.pillInactive}
               >
                 {tab === "products"
-                  ? "Products"
+                  ? "Storefront"
                   : tab === "cart"
-                    ? "Cart"
+                    ? "Shopping Cart"
                     : "Admin Panel"}
               </button>
             ))}
@@ -336,27 +332,20 @@ function App() {
           style={{
             display: "grid",
             gap: "1.5rem",
-            marginBottom: "1.5rem",
-            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            marginBottom: "2rem",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
           }}
         >
           <div style={theme.section.card}>
             <p style={theme.section.title}>Product inventory</p>
             <p style={theme.section.description}>
-              {products.length} items available for sale.
+              {products.length} items available currently.
             </p>
           </div>
           <div style={theme.section.card}>
             <p style={theme.section.title}>Active cart</p>
             <p style={theme.section.description}>
-              {cartQuantity} items in cart • ${cartTotal.toFixed(2)} total
-            </p>
-          </div>
-          <div style={theme.section.card}>
-            <p style={theme.section.title}>Live actions</p>
-            <p style={theme.section.description}>
-              Use the tabs above to browse, add items, or manage cart contents
-              in real time.
+              {cartQuantity} items • ${cartTotal.toFixed(2)} total
             </p>
           </div>
         </section>
@@ -364,25 +353,28 @@ function App() {
         {error && (
           <div
             style={{
-              background: "rgba(248,113,113,0.12)",
-              border: "1px solid rgba(248,113,113,0.22)",
+              background: "#fff0f0",
+              border: "1px solid #ffdcd5",
               borderRadius: "14px",
-              padding: "1rem 1.25rem",
-              marginBottom: "1.5rem",
+              padding: "1rem 1.5rem",
+              marginBottom: "2rem",
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
+              color: "#ff3b30",
+              fontWeight: 500
             }}
           >
-            <span>⚠️ {error}</span>
+            <span>Warning: {error}</span>
             <button
               onClick={() => setError(null)}
               style={{
                 background: "none",
                 border: "none",
-                color: "#fbbf24",
+                color: "#ff3b30",
                 cursor: "pointer",
-                fontSize: "1.2rem",
+                fontSize: "1.5rem",
+                padding: "0"
               }}
             >
               ×
@@ -390,26 +382,27 @@ function App() {
           </div>
         )}
 
+        {/* --- PRODUCTS TAB --- */}
         {activeTab === "products" && (
           <div>
             <div
               style={{
                 display: "grid",
                 gridTemplateColumns: "1fr auto auto",
-                gap: "0.75rem",
-                marginBottom: "1.5rem",
+                gap: "1rem",
+                marginBottom: "2rem",
               }}
             >
               <input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && searchProducts()}
-                placeholder="Search products"
+                placeholder="Search for products..."
                 style={theme.input.base}
               />
               <button
                 onClick={searchProducts}
-                style={{ ...theme.button.primary, minWidth: "140px" }}
+                style={{ ...theme.button.primary, minWidth: "120px" }}
               >
                 Search
               </button>
@@ -419,129 +412,80 @@ function App() {
             </div>
 
             {loading && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "3rem",
-                  color: theme.textMuted.color,
-                }}
-              >
-                Loading products...
+              <div style={{ textAlign: "center", padding: "4rem", color: "#86868b" }}>
+                Loading store inventory...
               </div>
             )}
             {!loading && products.length === 0 && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "3rem",
-                  color: theme.textMuted.color,
-                }}
-              >
-                No products found. Add some to populate the catalog.
+              <div style={{ textAlign: "center", padding: "4rem", color: "#86868b" }}>
+                No products found. Start by adding items in the Admin Panel.
               </div>
             )}
 
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(270px, 1fr))",
-                gap: "1.25rem",
+                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+                gap: "1.5rem",
               }}
             >
               {products.map((p) => (
                 <div
                   key={p.id}
                   style={{
-                    background: "rgba(255,255,255,0.04)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "#ffffff",
+                    border: "1px solid #e5e5ea",
                     borderRadius: "18px",
-                    padding: "1.5rem",
-                    transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                    padding: "2rem",
+                    transition: "all 0.3s ease",
+                    boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 18px 45px rgba(79,70,229,0.16)";
+                    e.currentTarget.style.transform = "scale(1.02)";
+                    e.currentTarget.style.boxShadow = "0 12px 32px rgba(0,0,0,0.08)";
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = "";
-                    e.currentTarget.style.boxShadow = "";
+                    e.currentTarget.style.transform = "scale(1)";
+                    e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.03)";
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      marginBottom: "1rem",
-                    }}
-                  >
-                    <span style={{ fontSize: "1.35rem" }}>📦</span>
-                    <span
-                      style={{
-                        fontSize: "0.85rem",
-                        color: theme.textMuted.color,
-                      }}
-                    >
-                      ID: {p.id}
-                    </span>
-                  </div>
-                  <h3
-                    style={{
-                      margin: "0 0 0.75rem",
-                      fontSize: "1.15rem",
-                      color: "#f8fafc",
-                    }}
-                  >
+                  <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.3rem", color: "#1d1d1f", fontWeight: 600 }}>
                     {p.name || "Unnamed Product"}
                   </h3>
-                  <p
-                    style={{
-                      margin: 0,
-                      color: theme.textMuted.color,
-                      fontSize: "0.95rem",
-                    }}
-                  >
-                    Price
-                  </p>
-                  <p
-                    style={{
-                      margin: "0.35rem 0 1.25rem",
-                      fontSize: "1.3rem",
-                      fontWeight: 700,
-                      color: "#a78bfa",
-                    }}
-                  >
-                    $
-                    {typeof p.price === "number" ? p.price.toFixed(2) : p.price}
-                  </p>
+                  <div style={{ fontSize: "0.85rem", color: "#86868b", marginBottom: "1.5rem" }}>
+                    SKU: {p.id.split('-')[0]}
+                  </div>
+                  <div style={{ margin: "0 0 1.5rem", fontSize: "1.8rem", fontWeight: 700, color: "#1d1d1f" }}>
+                    ${typeof p.price === "number" ? p.price.toFixed(2) : p.price}
+                  </div>
                   <button
                     onClick={() => addToCart(p)}
                     disabled={cartStatus[p.id] === "adding"}
                     style={{
                       width: "100%",
-                      padding: "0.75rem",
-                      borderRadius: "14px",
+                      padding: "0.9rem",
+                      borderRadius: "999px",
                       border: "none",
                       cursor: "pointer",
-                      fontWeight: 700,
+                      fontWeight: 500,
                       fontSize: "0.95rem",
-                      color: "#fff",
+                      color: cartStatus[p.id] === "added" ? "#1d1d1f" : "#fff",
                       background:
                         cartStatus[p.id] === "added"
-                          ? "#16a34a"
+                          ? "#e8e8ed"
                           : cartStatus[p.id] === "error"
-                            ? "#dc2626"
-                            : "linear-gradient(135deg, #8b5cf6, #38bdf8)",
+                            ? "#ff3b30"
+                            : "#0071e3",
+                      transition: "all 0.2s ease"
                     }}
                   >
                     {cartStatus[p.id] === "adding"
-                      ? "Adding…"
+                      ? "Processing…"
                       : cartStatus[p.id] === "added"
-                        ? "Added"
+                        ? "Added to Cart"
                         : cartStatus[p.id] === "error"
-                          ? "Try again"
-                          : "Add to cart"}
+                          ? "Error! Try Again"
+                          : "Buy Now"}
                   </button>
                 </div>
               ))}
@@ -549,246 +493,188 @@ function App() {
           </div>
         )}
 
+        {/* --- CART TAB --- */}
         {activeTab === "cart" && (
-          <div>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "1.5rem",
-              }}
-            >
-              <div>
-                <h2 style={theme.section.title}>Shopping Cart</h2>
-                <p style={theme.section.description}>
-                  {cartQuantity} items selected
-                </p>
-              </div>
-              <button onClick={fetchCart} style={theme.button.secondary}>
-                Refresh
-              </button>
-            </div>
-            {loading && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "3rem",
-                  color: theme.textMuted.color,
-                }}
-              >
-                Loading cart...
-              </div>
-            )}
-            {!loading && cart.length === 0 && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "3rem",
-                  color: theme.textMuted.color,
-                }}
-              >
-                Cart is empty. Add products to start checkout.
-              </div>
-            )}
-            {cart.map((item, idx) => (
-              <div
-                key={idx}
-                style={{
-                  background: "rgba(255,255,255,0.04)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  borderRadius: "16px",
-                  padding: "1.2rem 1.3rem",
-                  marginBottom: "0.85rem",
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                }}
-              >
-                <div>
-                  <div style={{ fontWeight: 700, color: "#f8fafc" }}>
-                    {item.name || item.productId}
-                  </div>
-                  <div
-                    style={{ color: theme.textMuted.color, fontSize: "0.9rem" }}
-                  >
-                    Qty: {item.quantity}
-                  </div>
-                </div>
-                <div
-                  style={{
-                    fontWeight: 700,
-                    color: "#a78bfa",
-                    fontSize: "1.05rem",
-                  }}
-                >
-                  ${(parseFloat(item.price || 0) * item.quantity).toFixed(2)}
-                </div>
-              </div>
-            ))}
-            {cart.length > 0 && (
-              <div
-                style={{
-                  textAlign: "right",
-                  marginTop: "1rem",
-                  fontSize: "1.2rem",
-                  fontWeight: 700,
-                }}
-              >
-                Total: ${cartTotal.toFixed(2)}
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === "admin" && (
           <div style={{ maxWidth: "800px", margin: "0 auto" }}>
             <div
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "center",
-                marginBottom: "1.5rem",
-              }}
-            >
-              <h2 style={theme.section.title}>Product Administration</h2>
-              <button onClick={cancelEdit} style={theme.button.secondary}>
-                Reset Form
-              </button>
-            </div>
-            <div
-              style={{
-                ...theme.section.card,
-                borderRadius: "20px",
-                padding: "2rem",
-                display: "grid",
-                gap: "1rem",
                 marginBottom: "2rem",
               }}
             >
-              <h3 style={{ margin: 0, color: "#f8fafc", fontSize: "1.15rem" }}>
-                {editingId ? "Edit Product" : "Add New Product"}
+              <div>
+                <h2 style={theme.section.title}>Your Bag</h2>
+                <p style={theme.section.description}>
+                  {cartQuantity} items
+                </p>
+              </div>
+              <button onClick={fetchCart} style={theme.button.secondary}>
+                Refresh Bag
+              </button>
+            </div>
+
+            {loading && (
+              <div style={{ textAlign: "center", padding: "4rem", color: "#86868b" }}>
+                Loading bag contents...
+              </div>
+            )}
+            {!loading && cart.length === 0 && (
+              <div style={{ textAlign: "center", padding: "4rem", color: "#86868b" }}>
+                Your bag is empty.
+              </div>
+            )}
+
+            <div style={{ background: "#fff", borderRadius: "18px", boxShadow: "0 4px 24px rgba(0,0,0,0.04)", overflow: "hidden" }}>
+              {cart.map((item, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    padding: "1.5rem 2rem",
+                    borderBottom: idx !== cart.length - 1 ? "1px solid #f5f5f7" : "none",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <div>
+                    <div style={{ fontWeight: 600, color: "#1d1d1f", fontSize: "1.1rem" }}>
+                      {item.name || item.productId}
+                    </div>
+                    <div style={{ color: "#86868b", fontSize: "0.95rem", marginTop: "0.3rem" }}>
+                      Quantity: {item.quantity}
+                    </div>
+                  </div>
+                  <div style={{ fontWeight: 600, color: "#1d1d1f", fontSize: "1.2rem" }}>
+                    ${(parseFloat(item.price || 0) * item.quantity).toFixed(2)}
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            {cart.length > 0 && (
+              <div style={{ textAlign: "right", marginTop: "2rem", fontSize: "1.8rem", fontWeight: 700, color: "#1d1d1f" }}>
+                Total: ${cartTotal.toFixed(2)}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* --- ADMIN TAB --- */}
+        {activeTab === "admin" && (
+          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+              <h2 style={theme.section.title}>Product Administration</h2>
+              <button onClick={cancelEdit} style={theme.button.secondary}>
+                Reset Editor
+              </button>
+            </div>
+            
+            <div style={{ ...theme.section.card, marginBottom: "2rem" }}>
+              <h3 style={{ margin: "0 0 1.5rem", color: "#1d1d1f", fontSize: "1.3rem", fontWeight: 600 }}>
+                {editingId ? "Edit Existing Product" : "Publish New Product"}
               </h3>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "1.5rem" }}>
                 <div>
-                  <label
-                    style={{
-                      fontSize: "0.88rem",
-                      color: theme.textMuted.color,
-                      display: "block",
-                      marginBottom: "0.45rem",
-                    }}
-                  >
+                  <label style={{ fontSize: "0.9rem", color: "#86868b", display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
                     Product Name
                   </label>
                   <input
                     value={newProduct.name}
-                    onChange={(e) =>
-                      setNewProduct((p) => ({ ...p, name: e.target.value }))
-                    }
-                    placeholder="e.g. Wireless Headphones"
+                    onChange={(e) => setNewProduct((p) => ({ ...p, name: e.target.value }))}
+                    placeholder="e.g. AirPods Pro"
                     style={theme.input.base}
                   />
                 </div>
                 <div>
-                  <label
-                    style={{
-                      fontSize: "0.88rem",
-                      color: theme.textMuted.color,
-                      display: "block",
-                      marginBottom: "0.45rem",
-                    }}
-                  >
+                  <label style={{ fontSize: "0.9rem", color: "#86868b", display: "block", marginBottom: "0.5rem", fontWeight: 500 }}>
                     Price ($)
                   </label>
                   <input
                     value={newProduct.price}
-                    onChange={(e) =>
-                      setNewProduct((p) => ({ ...p, price: e.target.value }))
-                    }
+                    onChange={(e) => setNewProduct((p) => ({ ...p, price: e.target.value }))}
                     type="number"
-                    placeholder="e.g. 49.99"
+                    placeholder="e.g. 249.00"
                     style={theme.input.base}
                   />
                 </div>
               </div>
-              <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
+
+              <div style={{ display: "flex", gap: "1rem" }}>
                 <button
                   onClick={saveProduct}
                   disabled={addingProduct || !newProduct.name || !newProduct.price}
                   style={{
                     ...theme.button.primary,
                     flex: 1,
-                    opacity: !newProduct.name || !newProduct.price ? 0.6 : 1,
-                    cursor:
-                      !newProduct.name || !newProduct.price
-                        ? "not-allowed"
-                        : "pointer",
+                    opacity: (!newProduct.name || !newProduct.price) ? 0.5 : 1,
+                    cursor: (!newProduct.name || !newProduct.price) ? "not-allowed" : "pointer",
                   }}
                 >
-                  {addingProduct ? "Saving…" : editingId ? "Save Changes" : "Add Product"}
+                  {addingProduct ? "Processing…" : editingId ? "Save Changes" : "Save Product"}
                 </button>
                 {editingId && (
                   <button onClick={cancelEdit} style={{ ...theme.button.secondary, flex: 1 }}>
-                    Cancel Edit
+                    Cancel
                   </button>
                 )}
               </div>
             </div>
 
-            <div
-              style={{
-                ...theme.section.card,
-                borderRadius: "20px",
-                padding: "2rem",
-              }}
-            >
-              <h3 style={{ margin: "0 0 1rem", color: "#f8fafc", fontSize: "1.15rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span>Product List</span>
-                <button onClick={fetchProducts} style={{ ...theme.button.secondary, padding: "0.4rem 0.8rem", fontSize: "0.85rem" }}>Refresh</button>
-              </h3>
-              {loading && <p style={{ color: theme.textMuted.color, textAlign: "center", padding: "2rem" }}>Loading products...</p>}
-              {!loading && products.length === 0 && <p style={{ color: theme.textMuted.color, textAlign: "center", padding: "2rem" }}>No products found.</p>}
-              {products.map((p) => (
-                <div
-                  key={p.id}
-                  style={{
-                    background: editingId === p.id ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.02)",
-                    border: editingId === p.id ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: "14px",
-                    padding: "1rem",
-                    marginBottom: "0.75rem",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    transition: "all 0.2s ease"
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: 700, color: "#f8fafc" }}>{p.name}</div>
-                    <div style={{ color: theme.textMuted.color, fontSize: "0.85rem", marginTop: "0.25rem" }}>
-                      ID: {p.id} • ${typeof p.price === 'number' ? p.price.toFixed(2) : p.price}
+            <div style={{ ...theme.section.card }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+                <h3 style={{ margin: 0, color: "#1d1d1f", fontSize: "1.3rem", fontWeight: 600 }}>Catalog Database</h3>
+                <button onClick={fetchProducts} style={{ ...theme.button.secondary, padding: "0.5rem 1rem", fontSize: "0.85rem" }}>Refresh Items</button>
+              </div>
+
+              {loading && <p style={{ textAlign: "center", color: "#86868b", padding: "2rem" }}>Synchronizing backend...</p>}
+              {!loading && products.length === 0 && <p style={{ textAlign: "center", color: "#86868b", padding: "2rem" }}>Database is currently empty.</p>}
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.8rem" }}>
+                {products.map((p) => (
+                  <div
+                    key={p.id}
+                    style={{
+                      background: editingId === p.id ? "#f5f5f7" : "#ffffff",
+                      border: editingId === p.id ? "1px solid #0071e3" : "1px solid #e5e5ea",
+                      borderRadius: "14px",
+                      padding: "1.2rem",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      transition: "all 0.2s ease"
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 600, color: "#1d1d1f", fontSize: "1.05rem" }}>{p.name}</div>
+                      <div style={{ color: "#86868b", fontSize: "0.9rem", marginTop: "0.3rem" }}>
+                        SKU: {p.id.substring(0, 8)} • <span style={{ fontWeight: 600, color: "#1d1d1f" }}>${typeof p.price === 'number' ? p.price.toFixed(2) : p.price}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                      <button
+                        onClick={() => startEdit(p)}
+                        style={{ ...theme.button.secondary, background: editingId === p.id ? "#0071e3" : "#e8e8ed", color: editingId === p.id ? "#fff" : "#1d1d1f", padding: "0.5rem 1rem", fontSize: "0.85rem" }}
+                      >
+                        {editingId === p.id ? "Editing" : "Edit"}
+                      </button>
+                      <button
+                        onClick={() => deleteProduct(p.id)}
+                        style={{ ...theme.button.secondary, padding: "0.5rem 1rem", fontSize: "0.85rem", background: "#fef0f0", color: "#ff3b30" }}
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
-                    <button
-                      onClick={() => startEdit(p)}
-                      style={{ ...theme.button.secondary, padding: "0.4rem 0.8rem", fontSize: "0.85rem", background: editingId === p.id ? "rgba(255,255,255,0.15)" : undefined }}
-                    >
-                      {editingId === p.id ? "Editing" : "Edit"}
-                    </button>
-                    <button
-                      onClick={() => deleteProduct(p.id)}
-                      style={{ ...theme.button.secondary, padding: "0.4rem 0.8rem", fontSize: "0.85rem", borderColor: "rgba(239,68,68,0.3)", color: "#ef4444" }}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
+            
           </div>
         )}
+
       </div>
     </div>
   );
