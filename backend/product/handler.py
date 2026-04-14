@@ -37,12 +37,14 @@ def lambda_handler(event, context):
 
     if http_method == 'GET' and 'id' in path_parameters:
         return get_product(path_parameters['id'])
+    elif http_method == 'DELETE' and 'id' in path_parameters:
+        return delete_product(path_parameters['id'])
+    elif http_method in ['PUT', 'PATCH'] and 'id' in path_parameters:
+        return update_product(path_parameters['id'], event.get('body'))
     elif http_method == 'GET':
         return list_products()
     elif http_method == 'POST':
         return create_product(event.get('body'))
-    elif http_method in ['PUT', 'PATCH']:
-        return create_product(event.get('body'))  # upsert via PUT
 
     return respond(400, {'message': f'Unsupported method {http_method}'})
 
@@ -75,5 +77,25 @@ def create_product(body):
             data['id'] = str(uuid.uuid4())
         table.put_item(Item=data)
         return respond(201, {'message': 'Product created', 'product': data})
+    except Exception as e:
+        return respond(500, {'error': str(e)})
+
+def update_product(product_id, body):
+    if not table or not body:
+        return respond(400, {'error': 'Bad request - body required'})
+    try:
+        data = json.loads(body, parse_float=decimal.Decimal)
+        data['id'] = product_id
+        table.put_item(Item=data)
+        return respond(200, {'message': 'Product updated', 'product': data})
+    except Exception as e:
+        return respond(500, {'error': str(e)})
+
+def delete_product(product_id):
+    if not table:
+        return respond(500, {'error': 'Table not configured'})
+    try:
+        table.delete_item(Key={'id': product_id})
+        return respond(200, {'message': 'Product deleted', 'id': product_id})
     except Exception as e:
         return respond(500, {'error': str(e)})

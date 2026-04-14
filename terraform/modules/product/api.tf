@@ -155,4 +155,36 @@ resource "aws_api_gateway_integration_response" "options_id" {
   depends_on = [aws_api_gateway_integration.options_id]
 }
 
+# PUT /products/{id}
+resource "aws_api_gateway_method" "put_id" {
+  rest_api_id   = var.api_id
+  resource_id   = aws_api_gateway_resource.resource_id.id
+  http_method   = "PUT"
+  authorization = "NONE"
+}
 
+resource "aws_api_gateway_integration" "put_id" {
+  rest_api_id             = var.api_id
+  resource_id             = aws_api_gateway_resource.resource_id.id
+  http_method             = aws_api_gateway_method.put_id.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.function.invoke_arn
+}
+
+# DELETE /products/{id}
+resource "aws_api_gateway_method" "delete_id" {
+  rest_api_id   = var.api_id
+  resource_id   = aws_api_gateway_resource.resource_id.id
+  http_method   = "DELETE"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "delete_id" {
+  rest_api_id             = var.api_id
+  resource_id             = aws_api_gateway_resource.resource_id.id
+  http_method             = aws_api_gateway_method.delete_id.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.function.invoke_arn
+}
