@@ -128,6 +128,7 @@ function App() {
   const [newProduct, setNewProduct] = useState({ name: "", price: "" });
   const [addingProduct, setAddingProduct] = useState(false);
   const [cartStatus, setCartStatus] = useState({});
+  const [editingId, setEditingId] = useState(null);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -213,27 +214,57 @@ function App() {
     }
   };
 
-  const addProduct = async () => {
+  const saveProduct = async () => {
     if (!newProduct.name || !newProduct.price) return;
     setAddingProduct(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/products`, {
-        method: "POST",
+      const url = editingId ? `${API_BASE}/products/${editingId}` : `${API_BASE}/products`;
+      const method = editingId ? "PUT" : "POST";
+      const payload = {
+        name: newProduct.name,
+        price: parseFloat(newProduct.price),
+      };
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newProduct.name,
-          price: parseFloat(newProduct.price),
-        }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       setNewProduct({ name: "", price: "" });
+      setEditingId(null);
       await fetchProducts();
     } catch (err) {
-      setError(`Failed to add product: ${err.message}`);
+      setError(`Failed to save product: ${err.message}`);
     } finally {
       setAddingProduct(false);
     }
+  };
+
+  const deleteProduct = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/products/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      await fetchProducts();
+    } catch (err) {
+      setError(`Failed to delete product: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startEdit = (product) => {
+    setNewProduct({ name: product.name, price: typeof product.price === 'number' ? product.price.toString() : product.price });
+    setEditingId(product.id);
+    setActiveTab("admin");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setNewProduct({ name: "", price: "" });
+    setEditingId(null);
   };
 
   useEffect(() => {
@@ -273,10 +304,13 @@ function App() {
           </div>
 
           <div style={theme.header.tabs}>
-            {["products", "cart", "add"].map((tab) => (
+            {["products", "cart", "admin"].map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  if (tab !== "admin") cancelEdit();
+                }}
                 style={{
                   ...theme.button.pill,
                   background:
@@ -292,7 +326,7 @@ function App() {
                   ? "Products"
                   : tab === "cart"
                     ? "Cart"
-                    : "Add Product"}
+                    : "Admin Panel"}
               </button>
             ))}
           </div>
@@ -607,9 +641,21 @@ function App() {
           </div>
         )}
 
-        {activeTab === "add" && (
-          <div style={{ maxWidth: "520px", margin: "0 auto" }}>
-            <h2 style={theme.section.title}>Add New Product</h2>
+        {activeTab === "admin" && (
+          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <h2 style={theme.section.title}>Product Administration</h2>
+              <button onClick={cancelEdit} style={theme.button.secondary}>
+                Reset Form
+              </button>
+            </div>
             <div
               style={{
                 ...theme.section.card,
@@ -617,65 +663,129 @@ function App() {
                 padding: "2rem",
                 display: "grid",
                 gap: "1rem",
+                marginBottom: "2rem",
               }}
             >
-              <div>
-                <label
+              <h3 style={{ margin: 0, color: "#f8fafc", fontSize: "1.15rem" }}>
+                {editingId ? "Edit Product" : "Add New Product"}
+              </h3>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div>
+                  <label
+                    style={{
+                      fontSize: "0.88rem",
+                      color: theme.textMuted.color,
+                      display: "block",
+                      marginBottom: "0.45rem",
+                    }}
+                  >
+                    Product Name
+                  </label>
+                  <input
+                    value={newProduct.name}
+                    onChange={(e) =>
+                      setNewProduct((p) => ({ ...p, name: e.target.value }))
+                    }
+                    placeholder="e.g. Wireless Headphones"
+                    style={theme.input.base}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      fontSize: "0.88rem",
+                      color: theme.textMuted.color,
+                      display: "block",
+                      marginBottom: "0.45rem",
+                    }}
+                  >
+                    Price ($)
+                  </label>
+                  <input
+                    value={newProduct.price}
+                    onChange={(e) =>
+                      setNewProduct((p) => ({ ...p, price: e.target.value }))
+                    }
+                    type="number"
+                    placeholder="e.g. 49.99"
+                    style={theme.input.base}
+                  />
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
+                <button
+                  onClick={saveProduct}
+                  disabled={addingProduct || !newProduct.name || !newProduct.price}
                   style={{
-                    fontSize: "0.88rem",
-                    color: theme.textMuted.color,
-                    display: "block",
-                    marginBottom: "0.45rem",
+                    ...theme.button.primary,
+                    flex: 1,
+                    opacity: !newProduct.name || !newProduct.price ? 0.6 : 1,
+                    cursor:
+                      !newProduct.name || !newProduct.price
+                        ? "not-allowed"
+                        : "pointer",
                   }}
                 >
-                  Product Name
-                </label>
-                <input
-                  value={newProduct.name}
-                  onChange={(e) =>
-                    setNewProduct((p) => ({ ...p, name: e.target.value }))
-                  }
-                  placeholder="Wireless Headphones"
-                  style={theme.input.base}
-                />
+                  {addingProduct ? "Saving…" : editingId ? "Save Changes" : "Add Product"}
+                </button>
+                {editingId && (
+                  <button onClick={cancelEdit} style={{ ...theme.button.secondary, flex: 1 }}>
+                    Cancel Edit
+                  </button>
+                )}
               </div>
-              <div>
-                <label
+            </div>
+
+            <div
+              style={{
+                ...theme.section.card,
+                borderRadius: "20px",
+                padding: "2rem",
+              }}
+            >
+              <h3 style={{ margin: "0 0 1rem", color: "#f8fafc", fontSize: "1.15rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span>Product List</span>
+                <button onClick={fetchProducts} style={{ ...theme.button.secondary, padding: "0.4rem 0.8rem", fontSize: "0.85rem" }}>Refresh</button>
+              </h3>
+              {loading && <p style={{ color: theme.textMuted.color, textAlign: "center", padding: "2rem" }}>Loading products...</p>}
+              {!loading && products.length === 0 && <p style={{ color: theme.textMuted.color, textAlign: "center", padding: "2rem" }}>No products found.</p>}
+              {products.map((p) => (
+                <div
+                  key={p.id}
                   style={{
-                    fontSize: "0.88rem",
-                    color: theme.textMuted.color,
-                    display: "block",
-                    marginBottom: "0.45rem",
+                    background: editingId === p.id ? "rgba(99,102,241,0.1)" : "rgba(255,255,255,0.02)",
+                    border: editingId === p.id ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: "14px",
+                    padding: "1rem",
+                    marginBottom: "0.75rem",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    transition: "all 0.2s ease"
                   }}
                 >
-                  Price ($)
-                </label>
-                <input
-                  value={newProduct.price}
-                  onChange={(e) =>
-                    setNewProduct((p) => ({ ...p, price: e.target.value }))
-                  }
-                  type="number"
-                  placeholder="49.99"
-                  style={theme.input.base}
-                />
-              </div>
-              <button
-                onClick={addProduct}
-                disabled={
-                  addingProduct || !newProduct.name || !newProduct.price
-                }
-                style={{
-                  ...theme.button.primary,
-                  opacity: !newProduct.name || !newProduct.price ? 0.6 : 1,
-                  cursor:
-                    !newProduct.name || !newProduct.price
-                      ? "not-allowed"
-                      : "pointer",
-                }}
-              >
-                {addingProduct ? "Adding product…" : "Add Product"}
-              </button>
+                  <div>
+                    <div style={{ fontWeight: 700, color: "#f8fafc" }}>{p.name}</div>
+                    <div style={{ color: theme.textMuted.color, fontSize: "0.85rem", marginTop: "0.25rem" }}>
+                      ID: {p.id} • ${typeof p.price === 'number' ? p.price.toFixed(2) : p.price}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <button
+                      onClick={() => startEdit(p)}
+                      style={{ ...theme.button.secondary, padding: "0.4rem 0.8rem", fontSize: "0.85rem", background: editingId === p.id ? "rgba(255,255,255,0.15)" : undefined }}
+                    >
+                      {editingId === p.id ? "Editing" : "Edit"}
+                    </button>
+                    <button
+                      onClick={() => deleteProduct(p.id)}
+                      style={{ ...theme.button.secondary, padding: "0.4rem 0.8rem", fontSize: "0.85rem", borderColor: "rgba(239,68,68,0.3)", color: "#ef4444" }}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
