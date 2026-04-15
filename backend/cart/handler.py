@@ -37,6 +37,8 @@ def lambda_handler(event, context):
         return get_cart(user_id)
     elif http_method in ['POST', 'PUT']:
         return update_cart(user_id, event.get('body'))
+    elif http_method == 'DELETE':
+        return delete_cart(user_id, event.get('body'))
 
     return respond(400, {'message': f'Unsupported method {http_method}'})
 
@@ -83,5 +85,25 @@ def update_cart(user_id, body):
             'items': safe_items
         })
         return respond(200, {'message': 'Cart updated', 'itemCount': len(safe_items)})
+    except Exception as e:
+        return respond(500, {'error': str(e)})
+
+
+def delete_cart(user_id, body=None):
+    if not table:
+        return respond(500, {'error': 'Table not configured'})
+    try:
+        if body:
+            data = json.loads(body)
+            product_id = data.get('productId')
+            if product_id:
+                current = table.get_item(Key={'userId': user_id}).get('Item', {})
+                items = current.get('items', [])
+                filtered_items = [i for i in items if str(i.get('productId')) != str(product_id)]
+                table.put_item(Item={'userId': user_id, 'items': filtered_items})
+                return respond(200, {'message': 'Item removed', 'itemCount': len(filtered_items)})
+
+        table.delete_item(Key={'userId': user_id})
+        return respond(200, {'message': 'Cart cleared', 'itemCount': 0})
     except Exception as e:
         return respond(500, {'error': str(e)})

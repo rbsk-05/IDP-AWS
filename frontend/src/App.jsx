@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from "react";
+import TestDashboard from "./test/TestDashboard";
+
 
 const API_BASE =
   "https://tymn5ur022.execute-api.ap-southeast-1.amazonaws.com/prod/api";
@@ -571,7 +573,7 @@ function App() {
           </p>
 
           <div style={theme.header.tabsContainer}>
-            {["products", "cart", "admin"].map((tab) => (
+            {["products", "cart", "admin", "testing"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -588,7 +590,9 @@ function App() {
                   ? "Storefront"
                   : tab === "cart"
                     ? "Shopping Cart"
-                    : "Admin Panel"}
+                    : tab === "admin"
+                      ? "Admin Panel"
+                      : "Service Testing"}
               </button>
             ))}
           </div>
@@ -1326,6 +1330,11 @@ function App() {
               </div>
             </div>
           </div>
+        )}
+
+        {/* --- TESTING TAB --- */}
+        {activeTab === "testing" && (
+          <TestDashboard />
         )}
       </div>
     </div>

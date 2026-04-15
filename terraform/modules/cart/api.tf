@@ -106,4 +106,23 @@ resource "aws_api_gateway_integration" "put" {
   uri                     = aws_lambda_function.function.invoke_arn
 }
 
+# -------------------
+# DELETE /cart
+# -------------------
+resource "aws_api_gateway_method" "delete" {
+  rest_api_id   = var.api_id
+  resource_id   = aws_api_gateway_resource.resource.id
+  http_method   = "DELETE"
+  authorization = "NONE"
+}
+
+resource "aws_api_gateway_integration" "delete" {
+  rest_api_id             = var.api_id
+  resource_id             = aws_api_gateway_resource.resource.id
+  http_method             = aws_api_gateway_method.delete.http_method
+  integration_http_method = "POST"
+  type                    = "AWS_PROXY"
+  uri                     = aws_lambda_function.function.invoke_arn
+}
+
 
