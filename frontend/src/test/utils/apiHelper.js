@@ -2,11 +2,14 @@ export const getApiBase = () => {
   return import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE || "https://tymn5ur022.execute-api.ap-southeast-1.amazonaws.com/prod/api";
 };
 
-export const runTestRequest = async (method, endpoint, body = null) => {
+export const runTestRequest = async (method, endpoint, body = null, isTestSuite = false) => {
   const url = `${getApiBase()}${endpoint}`;
   const options = {
     method,
-    headers: { 'Content-Type': 'application/json' }
+    headers: { 
+      'Content-Type': 'application/json',
+      ...(isTestSuite ? { 'x-test-suite': 'true' } : {})
+    }
   };
   if (body) options.body = JSON.stringify(body);
   

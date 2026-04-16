@@ -3,57 +3,62 @@ import { runTestRequest } from '../utils/apiHelper';
 
 const SearchTest = ({ onResult }) => {
   const [loading, setLoading] = useState(false);
+  const [isTestSuite, setIsTestSuite] = useState(true);
 
-  const handleAction = async (actionName, endpoint) => {
+  const handleAction = async (actionName, query) => {
     setLoading(true);
-    const result = await runTestRequest('GET', endpoint);
+    const result = await runTestRequest('GET', `/search?q=${encodeURIComponent(query)}`, null, isTestSuite);
     setLoading(false);
+    
     onResult({
       module: 'Search',
-      action: actionName,
+      action: `[${isTestSuite ? 'Integration' : 'Prod'}] ${actionName}`,
+      isIntegration: isTestSuite,
       ...result
     });
   };
 
-  const searchByName = () => {
-    // Using a likely exists name or Generic term
-    handleAction('Search by Product Name', '/search?q=iPhone');
-  };
-
-  const searchByCategory = () => {
-    handleAction('Search by Category', '/search?q=Electronics');
+  const searchArtifact = () => {
+    handleAction('Seek Artifact', 'Nimbus');
   };
 
   const emptySearch = () => {
-    handleAction('Empty Search Test', '/search?q=nonexistent_product_12345');
+    handleAction('Scan Full Catalog', '');
   };
 
   const btnStyle = {
-    padding: '8px 16px',
-    margin: '4px',
-    borderRadius: '6px',
-    border: '1px solid #d2d2d7',
-    background: '#fff',
+    padding: '0.6rem 1rem',
+    borderRadius: '999px',
+    border: '1px solid #C5A02844',
+    background: 'none',
+    color: '#C5A028',
     cursor: loading ? 'not-allowed' : 'pointer',
-    fontSize: '14px',
-    opacity: loading ? 0.7 : 1
+    fontSize: '0.85rem',
+    fontFamily: "'Spectral', serif",
+    transition: 'all 0.2s ease'
   };
 
   return (
-    <div style={{ marginBottom: '16px' }}>
-      <h3 style={{ margin: '0 0 12px', fontSize: '16px' }}>Search Service Tests</h3>
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-        <button style={btnStyle} onClick={searchByName} disabled={loading}>
-          Search by Product Name
-        </button>
-        <button style={btnStyle} onClick={searchByCategory} disabled={loading}>
-          Search by Category
-        </button>
-        <button style={btnStyle} onClick={emptySearch} disabled={loading}>
-          Empty Search Test
-        </button>
+    <div style={{ marginBottom: '2rem', padding: '1.5rem', borderRadius: '14px', background: 'rgba(197, 160, 40, 0.03)', border: '1px solid rgba(197, 160, 40, 0.1)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem' }}>
+        <h3 style={{ margin: 0, fontSize: '1.1rem', fontFamily: "'Cinzel', serif", color: '#C5A028' }}>Search Service Tests</h3>
+        <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}>
+          <input 
+            type="checkbox" 
+            checked={isTestSuite} 
+            onChange={(e) => setIsTestSuite(e.target.checked)}
+            style={{ accentColor: '#C5A028' }}
+          />
+          <span style={{ color: isTestSuite ? '#C5A028' : '#888', fontWeight: isTestSuite ? 600 : 400 }}>
+            Isolated Test Mode
+          </span>
+        </label>
       </div>
-      {loading && <div style={{ fontSize: '12px', color: '#0071e3', marginTop: '8px' }}>Running test...</div>}
+
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <button style={btnStyle} onClick={searchArtifact} disabled={loading}>Seek: "Nimbus"</button>
+        <button style={btnStyle} onClick={emptySearch} disabled={loading}>Scan All</button>
+      </div>
     </div>
   );
 };

@@ -12,9 +12,9 @@ const getTheme = (darkMode) => {
   const midnight = "#111114";
   const darkCard = "#1c1c1e";
 
-  // Magical Wand Cursors as Data URIs (Hotspot at 28,4 for the tip)
-  const wandLight = `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 28L28 4' stroke='%234a2c2a' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='28' cy='4' r='2' fill='%23FFD700'/%3E%3C/svg%3E") 28 4, auto`;
-  const wandDark = `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 28L28 4' stroke='%23e5e5ea' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='28' cy='4' r='2' fill='%2364d2ff'/%3E%3C/svg%3E") 28 4, auto`;
+  // Magical Wand Cursors as Data URIs (Hotspot at 4,4 for the tip - right-handed)
+  const wandLight = `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 28L4 4' stroke='%234a2c2a' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='4' cy='4' r='2' fill='%23FFD700'/%3E%3C/svg%3E") 4 4, auto`;
+  const wandDark = `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 28L4 4' stroke='%23e5e5ea' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='4' cy='4' r='2' fill='%2364d2ff'/%3E%3C/svg%3E") 4 4, auto`;
 
   return {
     page: {
@@ -202,6 +202,21 @@ function App() {
     return localStorage.getItem("darkMode") === "true";
   });
   const [sparks, setSparks] = useState([]);
+  const [filterCategory, setFilterCategory] = useState("All");
+  const [sortOption, setSortOption] = useState("default");
+
+  // Dynamic Search Logic (300ms Debounce)
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      // Avoid initial fetch if query is empty and we have products,
+      // but typically we want fresh results if query changes.
+      if (activeTab === "products") {
+        searchProducts();
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
 
   useEffect(() => {
     const handleGlobalClick = (e) => {
@@ -629,6 +644,11 @@ function App() {
     <div style={theme.page}>
       <style>
         {`
+          body {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+          }
           button, a, input, select, textarea, [role="button"] {
             cursor: inherit !important;
           }
@@ -744,30 +764,112 @@ function App() {
         {/* --- PRODUCTS TAB --- */}
         {activeTab === "products" && (
           <div>
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "1fr auto auto",
-                gap: "1rem",
-                marginBottom: "2rem",
-              }}
-            >
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && searchProducts()}
-                placeholder="Seek magical items..."
-                style={theme.input.base}
-              />
-              <button
-                onClick={searchProducts}
-                style={{ ...theme.button.primary, minWidth: "120px" }}
+            {/* Magical Search & Filter Cabinet */}
+            <div style={{ marginBottom: "2.5rem" }}>
+              <div
+                style={{
+                  position: "relative",
+                  marginBottom: "1.2rem",
+                  display: "flex",
+                  alignItems: "center",
+                }}
               >
-                Search
-              </button>
-              <button onClick={fetchProducts} style={theme.button.secondary}>
-                Refresh
-              </button>
+                {/* Revelio Eye Icon */}
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "1.25rem",
+                    pointerEvents: "none",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <svg
+                    width="22"
+                    height="22"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke={theme.gold}
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                </div>
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Seek magical artifacts..."
+                  style={{
+                    ...theme.input.base,
+                    paddingLeft: "3.5rem",
+                    boxShadow: darkMode
+                      ? "0 4px 20px rgba(0,0,0,0.3)"
+                      : "0 4px 20px rgba(197, 160, 40, 0.05)",
+                  }}
+                />
+              </div>
+
+              <div
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                  flexWrap: "wrap",
+                  alignItems: "center",
+                }}
+              >
+                <div style={{ flex: 1, display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                  <span style={{ fontSize: "0.9rem", color: theme.text.secondary, fontFamily: "'spectral', serif" }}>
+                    Filter by:
+                  </span>
+                  <select
+                    value={filterCategory}
+                    onChange={(e) => setFilterCategory(e.target.value)}
+                    style={{
+                      ...theme.input.base,
+                      width: "auto",
+                      padding: "0.5rem 1rem",
+                      fontSize: "0.9rem",
+                      borderRadius: "999px",
+                      border: `1px solid ${theme.gold}44`,
+                    }}
+                  >
+                    <option value="All">All Categories</option>
+                    {PRODUCT_CATEGORIES.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                  <span style={{ fontSize: "0.9rem", color: theme.text.secondary, fontFamily: "'spectral', serif" }}>
+                    Sort by:
+                  </span>
+                  <select
+                    value={sortOption}
+                    onChange={(e) => setSortOption(e.target.value)}
+                    style={{
+                      ...theme.input.base,
+                      width: "auto",
+                      padding: "0.5rem 1rem",
+                      fontSize: "0.9rem",
+                      borderRadius: "999px",
+                      border: `1px solid ${theme.gold}44`,
+                    }}
+                  >
+                    <option value="default">Default Order</option>
+                    <option value="priceLow">Galleons: Low to High</option>
+                    <option value="priceHigh">Galleons: High to Low</option>
+                  </select>
+                  <button onClick={fetchProducts} style={{ ...theme.button.secondary, padding: "0.5rem 1rem", fontSize: "0.85rem" }}>
+                    Refresh Items
+                  </button>
+                </div>
+              </div>
             </div>
 
             {loading && (
@@ -800,7 +902,14 @@ function App() {
                 gap: "1.5rem",
               }}
             >
-              {products.map((p) => {
+              {products
+                .filter((p) => filterCategory === "All" || p.category === filterCategory)
+                .sort((a, b) => {
+                  if (sortOption === "priceLow") return a.price - b.price;
+                  if (sortOption === "priceHigh") return b.price - a.price;
+                  return 0;
+                })
+                .map((p) => {
                 const productId = p.id || p.productId || p.product_id;
                 return (
                   <div

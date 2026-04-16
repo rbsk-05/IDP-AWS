@@ -5,12 +5,28 @@ import decimal
 import uuid
 
 dynamodb = boto3.resource('dynamodb')
-table_name = os.environ.get('TABLE_NAME')
-table = dynamodb.Table(table_name) if table_name else None
+
+def get_table(event):
+    # Support dynamic table switching for isolated testing
+    # Check headers case-insensitively
+    headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
+    is_test = headers.get('x-test-suite') == 'true'
+    prod_table_name = os.environ.get('TABLE_NAME', 'tf-darshan-product-table')
+    
+    target_table = prod_table_name
+    if is_test:
+        # Switch tf- to test-
+        target_table = prod_table_name.replace('tf-', 'test-')
+    
+    print(f"[AUDIT] Headers: {headers}")
+    print(f"[AUDIT] Test Mode: {is_test}")
+    print(f"[AUDIT] Target Table: {target_table}")
+    
+    return dynamodb.Table(target_table)
 
 CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization,x-test-suite',
     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
 }
 
@@ -30,25 +46,26 @@ def respond(status_code, body):
 def lambda_handler(event, context):
     http_method = event.get('httpMethod', '')
     path_parameters = event.get('pathParameters') or {}
+    table = get_table(event)
 
     # Handle preflight CORS
     if http_method == 'OPTIONS':
         return respond(200, {'message': 'ok'})
 
     if http_method == 'GET' and 'id' in path_parameters:
-        return get_product(path_parameters['id'])
+        return get_product(table, path_parameters['id'])
     elif http_method == 'DELETE' and 'id' in path_parameters:
-        return delete_product(path_parameters['id'])
+        return delete_product(table, path_parameters['id'])
     elif http_method in ['PUT', 'PATCH'] and 'id' in path_parameters:
-        return update_product(path_parameters['id'], event.get('body'))
+        return update_product(table, path_parameters['id'], event.get('body'))
     elif http_method == 'GET':
-        return list_products()
+        return list_products(table)
     elif http_method == 'POST':
-        return create_product(event.get('body'))
+        return create_product(table, event.get('body'))
 
     return respond(400, {'message': f'Unsupported method {http_method}'})
 
-def get_product(product_id):
+def get_product(table, product_id):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:
@@ -59,7 +76,7 @@ def get_product(product_id):
     except Exception as e:
         return respond(500, {'error': str(e)})
 
-def list_products():
+def list_products(table):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:
@@ -68,7 +85,7 @@ def list_products():
     except Exception as e:
         return respond(500, {'error': str(e)})
 
-def create_product(body):
+def create_product(table, body):
     if not table or not body:
         return respond(400, {'error': 'Bad request - body required'})
     try:
@@ -80,7 +97,7 @@ def create_product(body):
     except Exception as e:
         return respond(500, {'error': str(e)})
 
-def update_product(product_id, body):
+def update_product(table, product_id, body):
     if not table or not body:
         return respond(400, {'error': 'Bad request - body required'})
     try:
@@ -91,7 +108,7 @@ def update_product(product_id, body):
     except Exception as e:
         return respond(500, {'error': str(e)})
 
-def delete_product(product_id):
+def delete_product(table, product_id):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:

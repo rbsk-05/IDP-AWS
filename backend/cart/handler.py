@@ -4,12 +4,27 @@ import boto3
 import decimal
 
 dynamodb = boto3.resource('dynamodb')
-table_name = os.environ.get('TABLE_NAME')
-table = dynamodb.Table(table_name) if table_name else None
+
+def get_table(event):
+    # Support dynamic table switching for isolated testing
+    # Check headers case-insensitively
+    headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
+    is_test = headers.get('x-test-suite') == 'true'
+    prod_table_name = os.environ.get('TABLE_NAME', 'tf-darshan-cart-table')
+    
+    target_table = prod_table_name
+    if is_test:
+        target_table = prod_table_name.replace('tf-', 'test-')
+        
+    print(f"[AUDIT] Headers: {headers}")
+    print(f"[AUDIT] Test Mode: {is_test}")
+    print(f"[AUDIT] Target Table: {target_table}")
+    
+    return dynamodb.Table(target_table)
 
 CORS_HEADERS = {
     'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization,x-test-suite',
     'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
 }
 
@@ -30,19 +45,20 @@ def lambda_handler(event, context):
     http_method = event.get('httpMethod', '')
     claims = event.get('requestContext', {}).get('authorizer', {}).get('claims', {})
     user_id = claims.get('sub', 'anonymous')
+    table = get_table(event)
 
     if http_method == 'OPTIONS':
         return respond(200, {'message': 'ok'})
     if http_method == 'GET':
-        return get_cart(user_id)
+        return get_cart(table, user_id)
     elif http_method in ['POST', 'PUT']:
-        return update_cart(user_id, event.get('body'))
+        return update_cart(table, user_id, event.get('body'))
     elif http_method == 'DELETE':
-        return delete_cart(user_id, event.get('body'))
+        return delete_cart(table, user_id, event.get('body'))
 
     return respond(400, {'message': f'Unsupported method {http_method}'})
 
-def get_cart(user_id):
+def get_cart(table, user_id):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:
@@ -63,7 +79,7 @@ def get_cart(user_id):
     except Exception as e:
         return respond(500, {'error': str(e)})
 
-def update_cart(user_id, body):
+def update_cart(table, user_id, body):
     if not table or not body:
         return respond(400, {'error': 'Bad request - body required'})
     try:
@@ -89,7 +105,7 @@ def update_cart(user_id, body):
         return respond(500, {'error': str(e)})
 
 
-def delete_cart(user_id, body=None):
+def delete_cart(table, user_id, body=None):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:

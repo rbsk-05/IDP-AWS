@@ -10,6 +10,9 @@ output "api_integration_hash" {
     aws_api_gateway_method.post.id,
     aws_api_gateway_integration.post.id,
     aws_api_gateway_method.put.id,
-    aws_api_gateway_integration.put.id
+    aws_api_gateway_integration.put.id,
+    aws_api_gateway_method.options.id,
+    aws_api_gateway_integration.options.id,
+    aws_api_gateway_integration_response.options.id
   ]))
 }

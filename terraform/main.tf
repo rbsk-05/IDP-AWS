@@ -16,7 +16,8 @@ resource "aws_api_gateway_deployment" "main" {
     redeployment = sha1(jsonencode([
       module.product.api_integration_hash,
       module.cart.api_integration_hash,
-      module.search.api_integration_hash
+      module.search.api_integration_hash,
+      timestamp()
     ]))
   }
 
@@ -88,4 +89,8 @@ resource "aws_s3_bucket_policy" "frontend" {
       }
     ]
   })
+}
+
+module "test" {
+  source = "./test"
 }
