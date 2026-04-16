@@ -17,6 +17,7 @@ resource "aws_api_gateway_deployment" "main" {
       module.product.api_integration_hash,
       module.cart.api_integration_hash,
       module.search.api_integration_hash,
+      module.order.api_integration_hash,
       timestamp()
     ]))
   }
@@ -57,6 +58,13 @@ module "search" {
   api_id = aws_api_gateway_rest_api.main.id
   api_root_resource_id = aws_api_gateway_resource.api.id
   api_execution_arn = aws_api_gateway_rest_api.main.execution_arn
+}
+
+module "order" {
+  source               = "./modules/order"
+  api_id               = aws_api_gateway_rest_api.main.id
+  api_root_resource_id = aws_api_gateway_resource.api.id
+  api_execution_arn    = aws_api_gateway_rest_api.main.execution_arn
 }
 
 module "frontend" {

@@ -198,6 +198,8 @@ function App() {
   const [cartStatus, setCartStatus] = useState({});
   const [cartUpdating, setCartUpdating] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [orders, setOrders] = useState([]);
+  const [placingOrder, setPlacingOrder] = useState(false);
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("darkMode") === "true";
   });
@@ -626,12 +628,57 @@ function App() {
     setEditingId(null);
   };
 
+  const fetchOrders = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/orders`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(`Failed to fetch history: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const placeOrder = async () => {
+    if (cart.length === 0) return;
+    setPlacingOrder(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/orders`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: cart, total: cartTotal }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      // Success! Clear cart locally and in DB
+      await saveCartItems([]);
+      setCart([]);
+      
+      // Switch to history tab to show the new order
+      setActiveTab("history");
+      await fetchOrders();
+      
+      // Magical Success Feedback
+      alert("✨ Order Placed Successfully! Your items are flying your way via Owl Post.");
+    } catch (err) {
+      setError(`Failed to place order: ${err.message}`);
+    } finally {
+      setPlacingOrder(false);
+    }
+  };
+
   useEffect(() => {
     fetchProducts();
   }, []);
 
   useEffect(() => {
     if (activeTab === "cart") fetchCart();
+    if (activeTab === "history") fetchOrders();
   }, [activeTab]);
 
   const cartTotal = cart.reduce(
@@ -703,7 +750,7 @@ function App() {
           </p>
 
           <div style={theme.header.tabsContainer}>
-            {["products", "cart", "admin", "testing"].map((tab) => (
+            {["products", "cart", "history", "admin", "testing"].map((tab) => (
               <button
                 key={tab}
                 onClick={() => {
@@ -722,7 +769,9 @@ function App() {
                     ? "Wizarding Trunk"
                     : tab === "admin"
                       ? "Ministry Console"
-                      : "Arcane Testing"}
+                      : tab === "history"
+                        ? "Order History"
+                        : "Arcane Testing"}
               </button>
             ))}
           </div>
@@ -1232,14 +1281,91 @@ function App() {
                 style={{
                   textAlign: "right",
                   marginTop: "2rem",
-                  fontSize: "1.8rem",
-                  fontWeight: 700,
-                  color: theme.page.color,
+                  padding: "1.5rem",
+                  background: darkMode ? "rgba(197, 160, 40, 0.05)" : "#fdfbf7",
+                  borderRadius: "14px",
+                  border: `1px solid ${theme.gold}44`
                 }}
               >
-                Galleons Total: {formatCurrency(cartTotal)}
+                <div style={{ fontSize: "1.8rem", fontWeight: 700, color: theme.page.color, marginBottom: "1.5rem" }}>
+                  Galleons Total: {formatCurrency(cartTotal)}
+                </div>
+                <button
+                  onClick={placeOrder}
+                  disabled={placingOrder}
+                  style={{
+                    ...theme.button.primary,
+                    padding: "0.7rem 1.8rem",
+                    fontSize: "1rem",
+                    letterSpacing: "0.5px",
+                    boxShadow: "0 6px 15px rgba(197, 160, 40, 0.25)"
+                  }}
+                >
+                  {placingOrder ? "Casting Order..." : "Finalize Purchase (Place Order)"}
+                </button>
               </div>
             )}
+          </div>
+        )}
+
+        {/* --- ORDER HISTORY TAB --- */}
+        {activeTab === "history" && (
+          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+            <h2 style={{ ...theme.section.title, marginBottom: "2rem", textAlign: "center" }}>Past Scrolls of Purchase</h2>
+            
+            {loading && <p style={{ textAlign: "center", fontStyle: "italic", opacity: 0.6 }}>Consulting the Ministry archives...</p>}
+            
+            {!loading && orders.length === 0 && (
+              <div style={{ ...theme.section.card, textAlign: "center", padding: "4rem" }}>
+                <p style={{ fontSize: "1.2rem", opacity: 0.6 }}>No magical records found. Perhaps a memory charm was used?</p>
+              </div>
+            )}
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+              {orders.map((order) => (
+                <div 
+                  key={order.orderId} 
+                  style={{ 
+                    ...theme.section.card, 
+                    borderLeft: `5px solid ${theme.gold}`,
+                    background: darkMode ? "rgba(212, 175, 55, 0.03)" : "#fffcf8"
+                  }}
+                >
+                  <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(197, 160, 40, 0.1)", paddingBottom: "1rem", marginBottom: "1rem" }}>
+                    <div>
+                      <span style={{ color: theme.gold, fontWeight: 700, fontSize: "1.1rem" }}>{order.orderId}</span>
+                      <div style={{ fontSize: "0.85rem", opacity: 0.6, marginTop: "0.2rem" }}>
+                        Placed on {new Date(order.timestamp * 1000).toLocaleString()}
+                      </div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontWeight: 700, fontSize: "1.2rem", color: theme.gold }}>{formatCurrency(order.total)}</span>
+                      <div style={{ fontSize: "0.7rem", color: "#2ecc71", textTransform: "uppercase", fontWeight: 800 }}>{order.status}</div>
+                    </div>
+                  </div>
+                  
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                    {order.items.map((item, idx) => (
+                      <span key={idx} style={{ 
+                        background: darkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", 
+                        padding: "0.3rem 0.8rem", 
+                        borderRadius: "8px", 
+                        fontSize: "0.85rem" 
+                      }}>
+                        {item.quantity}x {item.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button 
+              onClick={fetchOrders} 
+              style={{ ...theme.button.secondary, width: "100%", marginTop: "2rem" }}
+            >
+              Refresh Archives
+            </button>
           </div>
         )}
 

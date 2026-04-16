@@ -4,11 +4,13 @@ import CartTest from './cart/CartTest';
 import SearchTest from './search/SearchTest';
 import { runFullRegressionSuite } from './regression/RegressionSuite';
 import { runProductUnitTests, runCartUnitTests, runSearchUnitTests } from './unit/ArcaneUnitTests';
+import OrderHistory from './orders/OrderHistory';
 
 const TestDashboard = ({ darkMode }) => {
   const [results, setResults] = useState([]);
   const [isCasting, setIsCasting] = useState(false);
   const [summary, setSummary] = useState(null);
+  const [activeTab, setActiveTab] = useState('tests'); // 'tests' or 'history'
 
   const addResult = (result) => {
     setResults((prev) => [
@@ -123,6 +125,39 @@ const TestDashboard = ({ darkMode }) => {
         </div>
       </div>
 
+      <div style={{ display: 'flex', borderBottom: '1px solid rgba(197, 160, 40, 0.2)', marginBottom: '2rem', gap: '2rem' }}>
+        <button 
+          onClick={() => setActiveTab('tests')}
+          style={{
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'tests' ? '2px solid #C5A028' : 'none',
+            color: activeTab === 'tests' ? '#C5A028' : '#888',
+            padding: '0.5rem 1rem',
+            fontFamily: "'Cinzel', serif",
+            cursor: 'pointer',
+            fontSize: '1.1rem'
+          }}
+        >
+          Service Tests
+        </button>
+        <button 
+          onClick={() => setActiveTab('history')}
+          style={{
+            background: 'none',
+            border: 'none',
+            borderBottom: activeTab === 'history' ? '2px solid #C5A028' : 'none',
+            color: activeTab === 'history' ? '#C5A028' : '#888',
+            padding: '0.5rem 1rem',
+            fontFamily: "'Cinzel', serif",
+            cursor: 'pointer',
+            fontSize: '1.1rem'
+          }}
+        >
+          Order History
+        </button>
+      </div>
+
       {summary && (
         <div style={{ ...cardStyle, background: 'rgba(197, 160, 40, 0.05)', textAlign: 'center', border: '2px solid #C5A028' }}>
           <h4 style={{ margin: '0 0 0.5rem', fontFamily: "'Cinzel', serif" }}>{summary.title}</h4>
@@ -134,9 +169,15 @@ const TestDashboard = ({ darkMode }) => {
 
       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '2rem' }}>
         <div>
-          <ProductTest onResult={addResult} />
-          <CartTest onResult={addResult} />
-          <SearchTest onResult={addResult} />
+          {activeTab === 'tests' ? (
+            <>
+              <ProductTest onResult={addResult} />
+              <CartTest onResult={addResult} />
+              <SearchTest onResult={addResult} />
+            </>
+          ) : (
+            <OrderHistory isTestSuite={true} />
+          )}
         </div>
 
         <div>

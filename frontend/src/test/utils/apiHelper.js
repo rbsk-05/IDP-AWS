@@ -38,3 +38,19 @@ export const runTestRequest = async (method, endpoint, body = null, isTestSuite 
     };
   }
 };
+export const apiHelpers = {
+  callApi: runTestRequest,
+  
+  // Product
+  getProducts: () => runTestRequest('GET', '/products'),
+  createProduct: (product, isTestSuite = false) => runTestRequest('POST', '/products', product, isTestSuite),
+  
+  // Cart
+  getCart: (isTestSuite = false) => runTestRequest('GET', '/cart', null, isTestSuite),
+  updateCart: (items, isTestSuite = false) => runTestRequest('POST', '/cart', { items }, isTestSuite),
+  clearCart: (isTestSuite = false) => runTestRequest('DELETE', '/cart', null, isTestSuite),
+  
+  // Orders
+  placeOrder: (cartData, isTestSuite = false) => runTestRequest('POST', '/orders', cartData, isTestSuite),
+  getOrderHistory: (isTestSuite = false) => runTestRequest('GET', '/orders', null, isTestSuite)
+};

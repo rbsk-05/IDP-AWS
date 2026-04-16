@@ -78,6 +78,40 @@ const CartTest = ({ onResult }) => {
     handleAction('Incendio (Clear Trunk)');
   };
 
+  const handlePlaceOrder = async () => {
+    setLoading(true);
+    // 1. Get current cart items
+    const items = await getCartData();
+    if (items.length === 0) {
+      onResult({
+        module: 'Cart',
+        action: 'Place Order',
+        success: false,
+        status: 'CLIENT_ERROR',
+        data: { error: 'Your trunk is empty. Cannot place an order with thin air.' }
+      });
+      setLoading(false);
+      return;
+    }
+
+    const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+    // 2. Place order
+    const result = await runTestRequest('POST', '/orders', { items, total }, isTestSuite);
+    
+    // 3. If successful, clear cart
+    if (result.success) {
+      await runTestRequest('DELETE', '/cart', null, isTestSuite);
+    }
+
+    setLoading(false);
+    onResult({
+      module: 'Order',
+      action: `[${isTestSuite ? 'Integration' : 'Prod'}] Place Order`,
+      ...result
+    });
+  };
+
   const btnStyle = {
     padding: '0.6rem 1rem',
     borderRadius: '999px',
@@ -113,6 +147,13 @@ const CartTest = ({ onResult }) => {
         <button style={btnStyle} onClick={updateQuantity} disabled={loading}>Transfigure Qty</button>
         <button style={btnStyle} onClick={removeItem} disabled={loading}>Vanish Item</button>
         <button style={btnStyle} onClick={clearCart} disabled={loading}>Incendio</button>
+        <button 
+          style={{ ...btnStyle, border: '1px solid var(--accent-gold)', background: 'rgba(212, 175, 55, 0.1)', fontWeight: 600 }} 
+          onClick={handlePlaceOrder} 
+          disabled={loading}
+        >
+          Place Order
+        </button>
       </div>
     </div>
   );
