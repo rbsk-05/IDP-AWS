@@ -5,139 +5,176 @@ import TestDashboard from "./test/TestDashboard";
 const API_BASE =
   "https://tymn5ur022.execute-api.ap-southeast-1.amazonaws.com/prod/api";
 
-const theme = {
-  page: {
-    fontFamily:
-      "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif",
-    margin: 0,
-    padding: 0,
-    minHeight: "100vh",
-    backgroundColor: "#f5f5f7",
-    color: "#1d1d1f",
-    WebkitFontSmoothing: "antialiased",
-  },
-  frame: {
-    maxWidth: "1024px",
-    margin: "0 auto",
-    padding: "2rem 1.5rem",
-  },
-  header: {
-    container: {
-      padding: "1rem 0 3rem",
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      textAlign: "center",
-      gap: "1.5rem",
-    },
-    title: {
+const getTheme = (darkMode) => {
+  const gold = "#C5A028";
+  const crimson = "#B01B1B";
+  const parchment = "#FDFBF7";
+  const midnight = "#111114";
+  const darkCard = "#1c1c1e";
+
+  return {
+    page: {
+      fontFamily: "'Spectral', serif",
       margin: 0,
-      fontSize: "3rem",
-      fontWeight: 700,
-      letterSpacing: "-0.015em",
-      color: "#1d1d1f",
+      padding: 0,
+      minHeight: "100vh",
+      backgroundColor: darkMode ? midnight : parchment,
+      color: darkMode ? "#f5f5f7" : "#1A0A0A",
+      WebkitFontSmoothing: "antialiased",
+      transition: "background-color 0.3s ease, color 0.3s ease",
     },
-    subtitle: {
-      margin: "0.5rem 0 0",
-      fontSize: "1.2rem",
-      fontWeight: 400,
-      color: "#86868b",
-      maxWidth: "500px",
+    frame: {
+      maxWidth: "1024px",
+      margin: "0 auto",
+      padding: "2rem 1.5rem",
     },
-    tabsContainer: {
-      display: "flex",
-      background: "#e3e3e8",
-      borderRadius: "999px",
-      padding: "0.25rem",
-      gap: "0.25rem",
+    header: {
+      container: {
+        padding: "1rem 0 3rem",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        textAlign: "center",
+        gap: "1.5rem",
+      },
+      title: {
+        fontFamily: "'Cinzel Decorative', cursive",
+        margin: 0,
+        fontSize: "3.5rem",
+        fontWeight: 700,
+        letterSpacing: "0.05em",
+        color: gold,
+        textShadow: darkMode ? "0 0 20px rgba(197, 160, 40, 0.3)" : "none",
+      },
+      subtitle: {
+        fontFamily: "'Spectral', serif",
+        margin: "0.5rem 0 0",
+        fontSize: "1.2rem",
+        fontStyle: "italic",
+        fontWeight: 400,
+        color: darkMode ? "#98989d" : "#5d5d61",
+        maxWidth: "600px",
+      },
+      tabsContainer: {
+        display: "flex",
+        background: darkMode ? "#2c2c2e" : "#e3e3e8",
+        borderRadius: "999px",
+        padding: "0.25rem",
+        gap: "0.25rem",
+      },
     },
-  },
-  section: {
-    card: {
-      background: "#ffffff",
-      borderRadius: "18px",
-      padding: "2rem",
-      boxShadow: "0 4px 24px rgba(0,0,0,0.04)",
-      border: "1px solid rgba(0,0,0,0.02)",
+    section: {
+      card: {
+        background: darkMode ? darkCard : "#ffffff",
+        borderRadius: "18px",
+        padding: "2rem",
+        boxShadow: darkMode ? "0 4px 24px rgba(0,0,0,0.4)" : "0 4px 24px rgba(197, 160, 40, 0.08)",
+        border: darkMode ? "1px solid rgba(197, 160, 40, 0.1)" : "1px solid rgba(197, 160, 40, 0.1)",
+        color: darkMode ? "#f5f5f7" : "#1A0A0A",
+      },
+      title: {
+        fontFamily: "'Cinzel', serif",
+        margin: 0,
+        fontSize: "1.5rem",
+        fontWeight: 600,
+        letterSpacing: "0.02em",
+        color: darkMode ? gold : "#1A0A0A",
+      },
+      description: {
+        margin: "0.5rem 0 0",
+        color: darkMode ? "#98989d" : "#5d5d61",
+        fontSize: "1rem",
+      },
     },
-    title: {
-      margin: 0,
-      fontSize: "1.5rem",
-      fontWeight: 600,
-      letterSpacing: "-0.01em",
-      color: "#1d1d1f",
+    button: {
+      primary: {
+        padding: "0.8rem 1.5rem",
+        borderRadius: "999px",
+        border: "none",
+        cursor: "pointer",
+        fontWeight: 600,
+        fontSize: "0.95rem",
+        background: gold,
+        color: "#000000",
+        transition: "all 0.2s ease",
+        fontFamily: "'Cinzel', serif",
+        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+      },
+      secondary: {
+        padding: "0.8rem 1.5rem",
+        borderRadius: "999px",
+        border: `1px solid ${gold}`,
+        background: "transparent",
+        color: darkMode ? gold : "#1A0A0A",
+        cursor: "pointer",
+        fontWeight: 500,
+        fontSize: "0.95rem",
+        transition: "all 0.2s ease",
+        fontFamily: "'Spectral', serif",
+      },
+      pillActive: {
+        padding: "0.6rem 1.25rem",
+        borderRadius: "999px",
+        border: "none",
+        cursor: "pointer",
+        fontWeight: 600,
+        fontSize: "0.95rem",
+        background: gold,
+        color: "#000000",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        transition: "all 0.2s ease",
+        fontFamily: "'Cinzel', serif",
+      },
+      pillInactive: {
+        padding: "0.6rem 1.25rem",
+        borderRadius: "999px",
+        border: "none",
+        cursor: "pointer",
+        fontWeight: 500,
+        fontSize: "0.95rem",
+        background: "transparent",
+        color: darkMode ? "#98989d" : "#86868b",
+        transition: "all 0.2s ease",
+        fontFamily: "'Spectral', serif",
+      },
     },
-    description: {
-      margin: "0.5rem 0 0",
-      color: "#86868b",
-      fontSize: "1rem",
+    input: {
+      base: {
+        width: "100%",
+        padding: "1rem 1.25rem",
+        borderRadius: "12px",
+        border: darkMode ? "1px solid #48484a" : "1px solid #d2d2d7",
+        background: darkMode ? "#3a3a3c" : "#ffffff",
+        color: darkMode ? "#ffffff" : "#1A0A0A",
+        fontSize: "1.05rem",
+        outline: "none",
+        transition: "all 0.2s ease",
+        boxSizing: "border-box",
+        fontFamily: "'Spectral', serif",
+      },
     },
-  },
-  button: {
-    primary: {
-      padding: "0.8rem 1.5rem",
-      borderRadius: "999px",
-      border: "none",
-      cursor: "pointer",
-      fontWeight: 500,
-      fontSize: "0.95rem",
-      background: "#0071e3",
-      color: "#fff",
-      transition: "all 0.2s ease",
+    textMuted: {
+      color: darkMode ? "#98989d" : "#5d5d61",
     },
-    secondary: {
-      padding: "0.8rem 1.5rem",
-      borderRadius: "999px",
-      border: "none",
-      background: "#e8e8ed",
-      color: "#1d1d1f",
-      cursor: "pointer",
-      fontWeight: 500,
-      fontSize: "0.95rem",
-      transition: "all 0.2s ease",
+    error: {
+      text: crimson,
+      background: darkMode ? "rgba(176, 27, 27, 0.1)" : "#fff0f0",
     },
-    pillActive: {
-      padding: "0.6rem 1.25rem",
-      borderRadius: "999px",
-      border: "none",
-      cursor: "pointer",
-      fontWeight: 500,
-      fontSize: "0.95rem",
-      background: "#ffffff",
-      color: "#1d1d1f",
-      boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-      transition: "all 0.2s ease",
+    text: {
+      primary: darkMode ? gold : "#1A0A0A",
+      secondary: darkMode ? "#98989d" : "#5d5d61",
     },
-    pillInactive: {
-      padding: "0.6rem 1.25rem",
-      borderRadius: "999px",
-      border: "none",
-      cursor: "pointer",
-      fontWeight: 500,
-      fontSize: "0.95rem",
-      background: "transparent",
-      color: "#86868b",
-      transition: "all 0.2s ease",
+    shadow: {
+      base: darkMode ? "0 4px 12px rgba(0,0,0,0.4)" : "0 4px 12px rgba(197, 160, 40, 0.05)",
+      hover: darkMode ? "0 12px 32px rgba(0,0,0,0.5)" : "0 12px 32px rgba(197, 160, 40, 0.15)",
     },
-  },
-  input: {
-    base: {
-      width: "100%",
-      padding: "1rem 1.25rem",
-      borderRadius: "12px",
-      border: "1px solid #d2d2d7",
-      background: "#ffffff",
-      color: "#1d1d1f",
-      fontSize: "1.05rem",
-      outline: "none",
-      transition: "all 0.2s ease",
-      boxSizing: "border-box",
-    },
-  },
-  textMuted: {
-    color: "#86868b",
-  },
+    gold: gold,
+    crimson: crimson,
+  };
 };
+
+
+
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -156,6 +193,17 @@ function App() {
   const [cartStatus, setCartStatus] = useState({});
   const [cartUpdating, setCartUpdating] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem("darkMode") === "true";
+  });
+
+  const toggleDarkMode = () => {
+    const nextMode = !darkMode;
+    setDarkMode(nextMode);
+    localStorage.setItem("darkMode", nextMode.toString());
+  };
+
+  const theme = getTheme(darkMode);
 
   const PRODUCT_CATEGORIES = [
     "General",
@@ -555,21 +603,21 @@ function App() {
     <div style={theme.page}>
       <div style={theme.frame}>
         <header style={theme.header.container}>
-          <span
-            style={{
-              fontSize: "0.85rem",
-              textTransform: "uppercase",
-              letterSpacing: "0.14em",
-              color: "#86868b",
-              fontWeight: 600,
-            }}
-          >
-            Store Framework
-          </span>
-          <h1 style={theme.header.title}>IDP Serverless Store</h1>
+          <div style={{ alignSelf: "flex-end", marginBottom: "-1rem" }}>
+            <button
+              onClick={toggleDarkMode}
+              style={{
+                ...theme.button.secondary,
+                padding: "0.5rem 1rem",
+                fontSize: "0.85rem",
+              }}
+            >
+              Mode: {darkMode ? "Light" : "Dark"}
+            </button>
+          </div>
+          <h1 style={theme.header.title}>The Diagon Alley</h1>
           <p style={theme.header.subtitle}>
-            A modern, serverless microservices architecture with an intuitive
-            aesthetic layout.
+            A wizarding marketplace where products appear like magic.
           </p>
 
           <div style={theme.header.tabsContainer}>
@@ -587,38 +635,17 @@ function App() {
                 }
               >
                 {tab === "products"
-                  ? "Storefront"
+                  ? "The Storefront"
                   : tab === "cart"
-                    ? "Shopping Cart"
+                    ? "Wizarding Trunk"
                     : tab === "admin"
-                      ? "Admin Panel"
-                      : "Service Testing"}
+                      ? "Ministry Console"
+                      : "Arcane Testing"}
               </button>
             ))}
           </div>
         </header>
 
-        <section
-          style={{
-            display: "grid",
-            gap: "1.5rem",
-            marginBottom: "2rem",
-            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          }}
-        >
-          <div style={theme.section.card}>
-            <p style={theme.section.title}>Product inventory</p>
-            <p style={theme.section.description}>
-              {products.length} items available currently.
-            </p>
-          </div>
-          <div style={theme.section.card}>
-            <p style={theme.section.title}>Active cart</p>
-            <p style={theme.section.description}>
-              {cartQuantity} items • {formatCurrency(cartTotal)} total
-            </p>
-          </div>
-        </section>
 
         {error && (
           <div
@@ -641,7 +668,7 @@ function App() {
               style={{
                 background: "none",
                 border: "none",
-                color: "#ff3b30",
+                color: theme.error.text,
                 cursor: "pointer",
                 fontSize: "1.5rem",
                 padding: "0",
@@ -667,7 +694,7 @@ function App() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && searchProducts()}
-                placeholder="Search for products..."
+                placeholder="Seek magical items..."
                 style={theme.input.base}
               />
               <button
@@ -686,7 +713,7 @@ function App() {
                 style={{
                   textAlign: "center",
                   padding: "4rem",
-                  color: "#86868b",
+                  color: theme.text.secondary,
                 }}
               >
                 Loading store inventory...
@@ -697,7 +724,7 @@ function App() {
                 style={{
                   textAlign: "center",
                   padding: "4rem",
-                  color: "#86868b",
+                  color: theme.text.secondary,
                 }}
               >
                 No products found. Start by adding items in the Admin Panel.
@@ -717,54 +744,59 @@ function App() {
                   <div
                     key={productId}
                     style={{
-                      background: "#ffffff",
-                      border: "1px solid #e5e5ea",
-                      borderRadius: "18px",
-                      padding: "2rem",
+                      ...theme.section.card,
                       transition: "all 0.3s ease",
-                      boxShadow: "0 2px 12px rgba(0,0,0,0.03)",
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = "scale(1.02)";
-                      e.currentTarget.style.boxShadow =
-                        "0 12px 32px rgba(0,0,0,0.08)";
+                      e.currentTarget.style.boxShadow = theme.shadow.hover;
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow =
-                        "0 2px 12px rgba(0,0,0,0.03)";
+                      e.currentTarget.style.boxShadow = theme.shadow.base;
                     }}
                   >
-                    <h3
-                      style={{
-                        margin: "0 0 0.5rem",
-                        fontSize: "1.3rem",
-                        color: "#1d1d1f",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {p.name || "Unnamed Product"}
-                    </h3>
                     <div
                       style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        marginBottom: "1rem",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        gap: "0",
+                        flex: 1,
                       }}
                     >
-                      <span
+                      <h3
                         style={{
-                          background: "#eef3ff",
-                          color: "#0f4fff",
-                          borderRadius: "999px",
-                          padding: "0.35rem 0.8rem",
-                          fontSize: "0.8rem",
+                          margin: 0,
+                          fontSize: "1.5rem",
+                          color: theme.page.color,
                           fontWeight: 600,
+                          fontFamily: "'Cinzel', serif",
                         }}
                       >
-                        {p.category || "General"}
-                      </span>
+                        {p.name || "Unnamed Artifact"}
+                      </h3>
+                      <div
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "0.5rem",
+                          margin: "0.5rem 0 1rem",
+                        }}
+                      >
+                        <span
+                          style={{
+                            background: darkMode ? "#3a3a3c" : "#eef3ff",
+                            color: darkMode ? "#64d2ff" : "#0f4fff",
+                            borderRadius: "999px",
+                            padding: "0.35rem 0.8rem",
+                            fontSize: "0.8rem",
+                            fontWeight: 600,
+                          }}
+                        >
+                          {p.category || "General"}
+                        </span>
+                      </div>
                     </div>
                     <div
                       style={{
@@ -780,57 +812,69 @@ function App() {
                     </div>
                     <div
                       style={{
-                        margin: "0 0 1.5rem",
-                        fontSize: "1.8rem",
-                        fontWeight: 700,
-                        color: "#1d1d1f",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        gap: "0",
                       }}
                     >
-                      {formatCurrency(p.price)}
-                    </div>
-                    <button
-                      onClick={() => addToCart(p)}
-                      disabled={
-                        cartStatus[productId] === "adding" ||
-                        (typeof p.stock === "number" && p.stock <= 0)
-                      }
-                      style={{
-                        width: "100%",
-                        padding: "0.9rem",
-                        borderRadius: "999px",
-                        border: "none",
-                        cursor:
+                      <div
+                        style={{
+                          margin: "0 0 1.5rem",
+                          fontSize: "1.8rem",
+                          fontWeight: 700,
+                          color: theme.page.color,
+                        }}
+                      >
+                        {formatCurrency(p.price)}
+                      </div>
+                      <button
+                        onClick={() => addToCart(p)}
+                        disabled={
                           cartStatus[productId] === "adding" ||
                           (typeof p.stock === "number" && p.stock <= 0)
-                            ? "not-allowed"
-                            : "pointer",
-                        fontWeight: 500,
-                        fontSize: "0.95rem",
-                        color:
-                          cartStatus[productId] === "added"
-                            ? "#1d1d1f"
-                            : "#fff",
-                        background:
-                          cartStatus[productId] === "added"
-                            ? "#e8e8ed"
-                            : cartStatus[productId] === "error"
-                              ? "#ff3b30"
-                              : typeof p.stock === "number" && p.stock <= 0
-                                ? "#d0d3d8"
-                                : "#0071e3",
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      {typeof p.stock === "number" && p.stock <= 0
-                        ? "Out of stock"
-                        : cartStatus[productId] === "adding"
-                          ? "Processing…"
-                          : cartStatus[productId] === "added"
-                            ? "Added to Cart"
-                            : cartStatus[productId] === "error"
-                              ? "Error! Try Again"
-                              : "Buy Now"}
-                    </button>
+                        }
+                        style={{
+                          width: "100%",
+                          padding: "0.9rem",
+                          borderRadius: "999px",
+                          border: "none",
+                          cursor:
+                            cartStatus[productId] === "adding" ||
+                            (typeof p.stock === "number" && p.stock <= 0)
+                              ? "not-allowed"
+                              : "pointer",
+                          fontWeight: 500,
+                          color:
+                            cartStatus[productId] === "added"
+                              ? (darkMode ? theme.gold : "#000000")
+                              : "#000000",
+                          background:
+                            cartStatus[productId] === "added"
+                              ? (darkMode ? "rgba(197, 160, 40, 0.1)" : "#e8e8ed")
+                              : cartStatus[productId] === "error"
+                                ? theme.crimson
+                                : typeof p.stock === "number" && p.stock <= 0
+                                  ? (darkMode ? "rgba(176, 27, 27, 0.2)" : "#f8d7da")
+                                  : theme.gold,
+                          transition: "all 0.2s ease",
+                          border: typeof p.stock === "number" && p.stock <= 0
+                            ? `1px solid ${theme.crimson}`
+                            : "none",
+                        }}
+                      >
+                        {typeof p.stock === "number" && p.stock <= 0
+                          ? "Out of Stock"
+                          : cartStatus[productId] === "adding"
+                            ? "Casting…"
+                            : cartStatus[productId] === "added"
+                              ? "In Trunk"
+                              : cartStatus[productId] === "error"
+                                ? "Fizzy! Try Again"
+                                : "Acquire Artifact"}
+
+                      </button>
+                    </div>
                   </div>
                 );
               })}
@@ -850,8 +894,8 @@ function App() {
               }}
             >
               <div>
-                <h2 style={theme.section.title}>Your Bag</h2>
-                <p style={theme.section.description}>{cartQuantity} items</p>
+                <h2 style={theme.section.title}>Wizarding Trunk</h2>
+                <p style={theme.section.description}>{cartQuantity} artifacts</p>
               </div>
               <div style={{ display: "flex", gap: "0.75rem" }}>
                 <button onClick={fetchCart} style={theme.button.secondary}>
@@ -888,9 +932,8 @@ function App() {
 
             <div
               style={{
-                background: "#fff",
-                borderRadius: "18px",
-                boxShadow: "0 4px 24px rgba(0,0,0,0.04)",
+                ...theme.section.card,
+                padding: 0,
                 overflow: "hidden",
               }}
             >
@@ -900,7 +943,7 @@ function App() {
                   style={{
                     padding: "1.5rem 2rem",
                     borderBottom:
-                      idx !== cart.length - 1 ? "1px solid #f5f5f7" : "none",
+                      idx !== cart.length - 1 ? `1px solid ${darkMode ? "rgba(255,255,255,0.1)" : "#f5f5f7"}` : "none",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "flex-start",
@@ -911,7 +954,7 @@ function App() {
                     <div
                       style={{
                         fontWeight: 600,
-                        color: "#1d1d1f",
+                        color: theme.page.color,
                         fontSize: "1.1rem",
                       }}
                     >
@@ -927,8 +970,8 @@ function App() {
                     >
                       <span
                         style={{
-                          background: "#eef3ff",
-                          color: "#0f4fff",
+                          background: darkMode ? "#3a3a3c" : "#eef3ff",
+                          color: darkMode ? "#64d2ff" : "#0f4fff",
                           borderRadius: "999px",
                           padding: "0.35rem 0.8rem",
                           fontSize: "0.8rem",
@@ -987,9 +1030,9 @@ function App() {
                         disabled={cartUpdating}
                         style={{
                           ...theme.button.secondary,
-                          background: "#fff4e5",
-                          color: "#b35c00",
-                          border: "1px solid #f5d7a2",
+                          background: darkMode ? "rgba(255, 149, 0, 0.1)" : "#fff4e5",
+                          color: darkMode ? "#ff9500" : "#b35c00",
+                          border: darkMode ? "1px solid rgba(255, 149, 0, 0.2)" : "1px solid #f5d7a2",
                           padding: "0.5rem 0.9rem",
                         }}
                       >
@@ -1000,7 +1043,7 @@ function App() {
                   <div
                     style={{
                       fontWeight: 600,
-                      color: "#1d1d1f",
+                      color: theme.page.color,
                       fontSize: "1.2rem",
                       minWidth: "120px",
                       textAlign: "right",
@@ -1021,10 +1064,10 @@ function App() {
                   marginTop: "2rem",
                   fontSize: "1.8rem",
                   fontWeight: 700,
-                  color: "#1d1d1f",
+                  color: theme.page.color,
                 }}
               >
-                Total: {formatCurrency(cartTotal)}
+                Galleons Total: {formatCurrency(cartTotal)}
               </div>
             )}
           </div>
@@ -1041,7 +1084,7 @@ function App() {
                 marginBottom: "1.5rem",
               }}
             >
-              <h2 style={theme.section.title}>Product Administration</h2>
+              <h2 style={theme.section.title}>Ministry Catalog Console</h2>
               <button onClick={cancelEdit} style={theme.button.secondary}>
                 Reset Editor
               </button>
@@ -1051,12 +1094,13 @@ function App() {
               <h3
                 style={{
                   margin: "0 0 1.5rem",
-                  color: "#1d1d1f",
-                  fontSize: "1.3rem",
+                  color: theme.page.color,
+                  fontSize: "1.5rem",
                   fontWeight: 600,
+                  fontFamily: "'Cinzel', serif",
                 }}
               >
-                {editingId ? "Edit Existing Product" : "Publish New Product"}
+                {editingId ? "Rewrite Artifact Data" : "Publish New Artifact"}
               </h3>
 
               <div
@@ -1205,12 +1249,13 @@ function App() {
                 <h3
                   style={{
                     margin: 0,
-                    color: "#1d1d1f",
-                    fontSize: "1.3rem",
+                    color: theme.page.color,
+                    fontSize: "1.5rem",
                     fontWeight: 600,
+                    fontFamily: "'Cinzel', serif",
                   }}
                 >
-                  Catalog Database
+                  Arcane Database
                 </h3>
                 <button
                   onClick={fetchProducts}
@@ -1261,11 +1306,11 @@ function App() {
                       key={productId}
                       style={{
                         background:
-                          editingId === productId ? "#f5f5f7" : "#ffffff",
+                          editingId === productId ? (darkMode ? "rgba(0,113,227,0.1)" : "#f5f5f7") : theme.section.card.background,
                         border:
                           editingId === productId
                             ? "1px solid #0071e3"
-                            : "1px solid #e5e5ea",
+                            : `1px solid ${darkMode ? "rgba(255,255,255,0.1)" : "#e5e5ea"}`,
                         borderRadius: "14px",
                         padding: "1.2rem",
                         display: "flex",
@@ -1278,7 +1323,7 @@ function App() {
                         <div
                           style={{
                             fontWeight: 600,
-                            color: "#1d1d1f",
+                            color: theme.page.color,
                             fontSize: "1.05rem",
                           }}
                         >
@@ -1292,7 +1337,7 @@ function App() {
                           }}
                         >
                           SKU: {productId?.substring(0, 8)} •{" "}
-                          <span style={{ fontWeight: 600, color: "#1d1d1f" }}>
+                          <span style={{ fontWeight: 600, color: theme.page.color }}>
                             {formatCurrency(p.price)}
                           </span>
                         </div>
@@ -1303,8 +1348,8 @@ function App() {
                           style={{
                             ...theme.button.secondary,
                             background:
-                              editingId === productId ? "#0071e3" : "#e8e8ed",
-                            color: editingId === productId ? "#fff" : "#1d1d1f",
+                              editingId === productId ? "#0071e3" : theme.button.secondary.background,
+                            color: editingId === productId ? "#fff" : theme.button.secondary.color,
                             padding: "0.5rem 1rem",
                             fontSize: "0.85rem",
                           }}
@@ -1317,7 +1362,7 @@ function App() {
                             ...theme.button.secondary,
                             padding: "0.5rem 1rem",
                             fontSize: "0.85rem",
-                            background: "#fef0f0",
+                            background: darkMode ? "rgba(255, 59, 48, 0.1)" : "#fef0f0",
                             color: "#ff3b30",
                           }}
                         >
@@ -1334,7 +1379,7 @@ function App() {
 
         {/* --- TESTING TAB --- */}
         {activeTab === "testing" && (
-          <TestDashboard />
+          <TestDashboard darkMode={darkMode} />
         )}
       </div>
     </div>
