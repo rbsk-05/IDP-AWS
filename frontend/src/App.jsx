@@ -12,6 +12,10 @@ const getTheme = (darkMode) => {
   const midnight = "#111114";
   const darkCard = "#1c1c1e";
 
+  // Magical Wand Cursors as Data URIs (Hotspot at 28,4 for the tip)
+  const wandLight = `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 28L28 4' stroke='%234a2c2a' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='28' cy='4' r='2' fill='%23FFD700'/%3E%3C/svg%3E") 28 4, auto`;
+  const wandDark = `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M4 28L28 4' stroke='%23e5e5ea' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='28' cy='4' r='2' fill='%2364d2ff'/%3E%3C/svg%3E") 28 4, auto`;
+
   return {
     page: {
       fontFamily: "'Spectral', serif",
@@ -22,6 +26,7 @@ const getTheme = (darkMode) => {
       color: darkMode ? "#f5f5f7" : "#1A0A0A",
       WebkitFontSmoothing: "antialiased",
       transition: "background-color 0.3s ease, color 0.3s ease",
+      cursor: darkMode ? wandDark : wandLight,
     },
     frame: {
       maxWidth: "1024px",
@@ -196,6 +201,27 @@ function App() {
   const [darkMode, setDarkMode] = useState(() => {
     return localStorage.getItem("darkMode") === "true";
   });
+  const [sparks, setSparks] = useState([]);
+
+  useEffect(() => {
+    const handleGlobalClick = (e) => {
+      const newSparks = Array.from({ length: 6 }).map((_, i) => ({
+        id: `${Date.now()}-${i}`,
+        x: e.clientX,
+        y: e.clientY,
+        angle: (Math.PI * 2 * i) / 6 + (Math.random() * 0.5),
+        velocity: 2 + Math.random() * 3,
+        size: 2 + Math.random() * 3,
+      }));
+      setSparks((prev) => [...prev, ...newSparks]);
+      setTimeout(() => {
+        setSparks((prev) => prev.filter((s) => !newSparks.includes(s)));
+      }, 600);
+    };
+
+    window.addEventListener("mousedown", handleGlobalClick);
+    return () => window.removeEventListener("mousedown", handleGlobalClick);
+  }, []);
 
   const toggleDarkMode = () => {
     const nextMode = !darkMode;
@@ -601,6 +627,42 @@ function App() {
 
   return (
     <div style={theme.page}>
+      <style>
+        {`
+          button, a, input, select, textarea, [role="button"] {
+            cursor: inherit !important;
+          }
+          @keyframes spark-ping {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+          }
+          .magic-spark {
+            position: fixed;
+            pointer-events: none;
+            border-radius: 50%;
+            z-index: 9999;
+            animation: spark-ping 0.6s ease-out forwards;
+          }
+        `}
+      </style>
+
+      {sparks.map((spark) => (
+        <div
+          key={spark.id}
+          className="magic-spark"
+          style={{
+            left: spark.x,
+            top: spark.y,
+            width: spark.size,
+            height: spark.size,
+            background: darkMode ? "#64d2ff" : "#C5A028",
+            boxShadow: `0 0 8px ${darkMode ? "#64d2ff" : "#C5A028"}`,
+            "--dx": `${Math.cos(spark.angle) * 40}px`,
+            "--dy": `${Math.sin(spark.angle) * 40}px`,
+          }}
+        />
+      ))}
+
       <div style={theme.frame}>
         <header style={theme.header.container}>
           <div style={{ alignSelf: "flex-end", marginBottom: "-1rem" }}>
@@ -838,7 +900,6 @@ function App() {
                           width: "100%",
                           padding: "0.9rem",
                           borderRadius: "999px",
-                          border: "none",
                           cursor:
                             cartStatus[productId] === "adding" ||
                             (typeof p.stock === "number" && p.stock <= 0)
