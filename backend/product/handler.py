@@ -6,6 +6,7 @@ import uuid
 
 dynamodb = boto3.resource('dynamodb')
 
+#FUNCTION TO GET THE TABLE
 def get_table(event):
     # Support dynamic table switching for isolated testing
     # Check headers case-insensitively
@@ -47,7 +48,7 @@ def lambda_handler(event, context):
     http_method = event.get('httpMethod', '')
     path_parameters = event.get('pathParameters') or {}
     table = get_table(event)
-
+    
     # Handle preflight CORS
     if http_method == 'OPTIONS':
         return respond(200, {'message': 'ok'})

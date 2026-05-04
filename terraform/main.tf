@@ -29,7 +29,8 @@ resource "aws_api_gateway_deployment" "main" {
   depends_on = [
     module.product,
     module.cart,
-    module.search
+    module.search,
+    module.easter
   ]
 }
 
@@ -101,4 +102,12 @@ resource "aws_s3_bucket_policy" "frontend" {
 
 module "test" {
   source = "./test"
+}
+
+module "easter" {
+  source = "./modules/easteregg"
+
+  api_id               = aws_api_gateway_rest_api.main.id
+  api_root_resource_id = aws_api_gateway_resource.api.id
+  api_execution_arn    = aws_api_gateway_rest_api.main.execution_arn
 }

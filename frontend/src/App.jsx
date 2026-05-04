@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import TestDashboard from "./test/TestDashboard";
 
-
 const API_BASE =
   "https://tymn5ur022.execute-api.ap-southeast-1.amazonaws.com/prod/api";
 
@@ -178,9 +177,6 @@ const getTheme = (darkMode) => {
   };
 };
 
-
-
-
 function App() {
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
@@ -206,6 +202,8 @@ function App() {
   const [sparks, setSparks] = useState([]);
   const [filterCategory, setFilterCategory] = useState("All");
   const [sortOption, setSortOption] = useState("default");
+
+  const [easterProducts, setEasterProducts] = useState([]);
 
   // Dynamic Search Logic (300ms Debounce)
   useEffect(() => {
@@ -240,11 +238,32 @@ function App() {
     return () => window.removeEventListener("mousedown", handleGlobalClick);
   }, []);
 
+  useEffect(() => {
+  if (activeTab === "easteregg") {
+    fetchEasterproducts();
+  }
+}, [activeTab]);
+
   const toggleDarkMode = () => {
     const nextMode = !darkMode;
     setDarkMode(nextMode);
     localStorage.setItem("darkMode", nextMode.toString());
   };
+
+  const flooStyle = {
+  position: "fixed",
+  bottom: "20px",
+  right: "20px",
+  opacity: 0.25,
+  transform: "scale(0.8)",
+  transition: "all 0.3s ease",
+  zIndex: 1000,
+};
+
+  const flooHover = {
+  opacity: 1,
+  transform: "scale(1)",
+};
 
   const theme = getTheme(darkMode);
 
@@ -303,6 +322,18 @@ function App() {
       setLoading(false);
     }
   };
+
+  const fetchEasterproducts = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/easter`);
+      const data = await res.json();
+
+      setEasterProducts(Array.isArray(data) ? data : []);
+    }
+    catch(err){
+      console.log(err);
+    }
+  }
 
   const searchProducts = async () => {
     setLoading(true);
@@ -731,6 +762,7 @@ function App() {
       ))}
 
       <div style={theme.frame}>
+         {activeTab !== "easteregg" && (
         <header style={theme.header.container}>
           <div style={{ alignSelf: "flex-end", marginBottom: "-1rem" }}>
             <button
@@ -744,10 +776,21 @@ function App() {
               Mode: {darkMode ? "Light" : "Dark"}
             </button>
           </div>
-          <h1 style={theme.header.title}>The Diagon Alley</h1>
+          <h1 style={theme.header.title}>
+            The Diagon Alley
+          </h1>
           <p style={theme.header.subtitle}>
             A wizarding marketplace where products appear like magic.
           </p>
+
+          {/*NEW HIDDEN EASTER EGG BUTTON*/}
+          <button
+          onClick={() => setActiveTab("easteregg")}
+          style={flooStyle}
+          onMouseEnter={(e) => Object.assign(e.currentTarget.style, flooHover)}
+          onMouseLeave={(e) => Object.assign(e.currentTarget.style, flooStyle)}>
+            🪄
+          </button>
 
           <div style={theme.header.tabsContainer}>
             {["products", "cart", "history", "admin", "testing"].map((tab) => (
@@ -776,9 +819,9 @@ function App() {
             ))}
           </div>
         </header>
+         )}
 
-
-        {error && (
+        {activeTab !== "easteregg" && error && (
           <div
             style={{
               background: "#fff0f0",
@@ -1676,6 +1719,23 @@ function App() {
         {/* --- TESTING TAB --- */}
         {activeTab === "testing" && (
           <TestDashboard darkMode={darkMode} />
+        )}
+
+        {/*EASTER EGG TAB*/}
+        {activeTab === "easteregg" && (
+          <div>
+            <h1>EASTER EGG FOUND!</h1>
+            <button
+            onClick={() => setActiveTab("products")}
+            style={theme.button.primary}>
+              REAL WORLD
+            </button>
+          {easterProducts.map((item) => (
+            <div key={item.id}>
+              <div style = {{...theme.section.card}}>{item.name} - ${item.price}</div>
+            </div>
+          ))}
+          </div>
         )}
       </div>
     </div>
