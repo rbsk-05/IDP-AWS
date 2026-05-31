@@ -2,6 +2,8 @@
 
 ## Architecture Overview
 
+<img width="1920" height="1080" alt="IDP" src="https://github.com/user-attachments/assets/acc57a52-bef7-4dfb-8736-d6fe96cda90c" />
+
 This project is built as a serverless storefront using AWS managed services.
 
 - Frontend: React + Vite static app deployed to S3 and served through CloudFront.
