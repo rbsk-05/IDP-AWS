@@ -1,181 +1,19 @@
 import React, { useState, useEffect } from "react";
 import TestDashboard from "./test/TestDashboard";
-
-const API_BASE =
-  "https://tymn5ur022.execute-api.ap-southeast-1.amazonaws.com/prod/api";
-
-const getTheme = (darkMode) => {
-  const gold = "#C5A028";
-  const crimson = "#B01B1B";
-  const parchment = "#FDFBF7";
-  const midnight = "#111114";
-  const darkCard = "#1c1c1e";
-
-  // Magical Wand Cursors as Data URIs (Hotspot at 4,4 for the tip - right-handed)
-  const wandLight = `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 28L4 4' stroke='%234a2c2a' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='4' cy='4' r='2' fill='%23FFD700'/%3E%3C/svg%3E") 4 4, auto`;
-  const wandDark = `url("data:image/svg+xml,%3Csvg width='32' height='32' viewBox='0 0 32 32' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M28 28L4 4' stroke='%23e5e5ea' stroke-width='3' stroke-linecap='round'/%3E%3Ccircle cx='4' cy='4' r='2' fill='%2364d2ff'/%3E%3C/svg%3E") 4 4, auto`;
-
-  return {
-    page: {
-      fontFamily: "'Spectral', serif",
-      margin: 0,
-      padding: 0,
-      minHeight: "100vh",
-      backgroundColor: darkMode ? midnight : parchment,
-      color: darkMode ? "#f5f5f7" : "#1A0A0A",
-      WebkitFontSmoothing: "antialiased",
-      transition: "background-color 0.3s ease, color 0.3s ease",
-      cursor: darkMode ? wandDark : wandLight,
-    },
-    frame: {
-      maxWidth: "1024px",
-      margin: "0 auto",
-      padding: "2rem 1.5rem",
-    },
-    header: {
-      container: {
-        padding: "1rem 0 3rem",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        textAlign: "center",
-        gap: "1.5rem",
-      },
-      title: {
-        fontFamily: "'Cinzel Decorative', cursive",
-        margin: 0,
-        fontSize: "3.5rem",
-        fontWeight: 700,
-        letterSpacing: "0.05em",
-        color: gold,
-        textShadow: darkMode ? "0 0 20px rgba(197, 160, 40, 0.3)" : "none",
-      },
-      subtitle: {
-        fontFamily: "'Spectral', serif",
-        margin: "0.5rem 0 0",
-        fontSize: "1.2rem",
-        fontStyle: "italic",
-        fontWeight: 400,
-        color: darkMode ? "#98989d" : "#5d5d61",
-        maxWidth: "600px",
-      },
-      tabsContainer: {
-        display: "flex",
-        background: darkMode ? "#2c2c2e" : "#e3e3e8",
-        borderRadius: "999px",
-        padding: "0.25rem",
-        gap: "0.25rem",
-      },
-    },
-    section: {
-      card: {
-        background: darkMode ? darkCard : "#ffffff",
-        borderRadius: "18px",
-        padding: "2rem",
-        boxShadow: darkMode ? "0 4px 24px rgba(0,0,0,0.4)" : "0 4px 24px rgba(197, 160, 40, 0.08)",
-        border: darkMode ? "1px solid rgba(197, 160, 40, 0.1)" : "1px solid rgba(197, 160, 40, 0.1)",
-        color: darkMode ? "#f5f5f7" : "#1A0A0A",
-      },
-      title: {
-        fontFamily: "'Cinzel', serif",
-        margin: 0,
-        fontSize: "1.5rem",
-        fontWeight: 600,
-        letterSpacing: "0.02em",
-        color: darkMode ? gold : "#1A0A0A",
-      },
-      description: {
-        margin: "0.5rem 0 0",
-        color: darkMode ? "#98989d" : "#5d5d61",
-        fontSize: "1rem",
-      },
-    },
-    button: {
-      primary: {
-        padding: "0.8rem 1.5rem",
-        borderRadius: "999px",
-        border: "none",
-        cursor: "pointer",
-        fontWeight: 600,
-        fontSize: "0.95rem",
-        background: gold,
-        color: "#000000",
-        transition: "all 0.2s ease",
-        fontFamily: "'Cinzel', serif",
-        boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
-      },
-      secondary: {
-        padding: "0.8rem 1.5rem",
-        borderRadius: "999px",
-        border: `1px solid ${gold}`,
-        background: "transparent",
-        color: darkMode ? gold : "#1A0A0A",
-        cursor: "pointer",
-        fontWeight: 500,
-        fontSize: "0.95rem",
-        transition: "all 0.2s ease",
-        fontFamily: "'Spectral', serif",
-      },
-      pillActive: {
-        padding: "0.6rem 1.25rem",
-        borderRadius: "999px",
-        border: "none",
-        cursor: "pointer",
-        fontWeight: 600,
-        fontSize: "0.95rem",
-        background: gold,
-        color: "#000000",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-        transition: "all 0.2s ease",
-        fontFamily: "'Cinzel', serif",
-      },
-      pillInactive: {
-        padding: "0.6rem 1.25rem",
-        borderRadius: "999px",
-        border: "none",
-        cursor: "pointer",
-        fontWeight: 500,
-        fontSize: "0.95rem",
-        background: "transparent",
-        color: darkMode ? "#98989d" : "#86868b",
-        transition: "all 0.2s ease",
-        fontFamily: "'Spectral', serif",
-      },
-    },
-    input: {
-      base: {
-        width: "100%",
-        padding: "1rem 1.25rem",
-        borderRadius: "12px",
-        border: darkMode ? "1px solid #48484a" : "1px solid #d2d2d7",
-        background: darkMode ? "#3a3a3c" : "#ffffff",
-        color: darkMode ? "#ffffff" : "#1A0A0A",
-        fontSize: "1.05rem",
-        outline: "none",
-        transition: "all 0.2s ease",
-        boxSizing: "border-box",
-        fontFamily: "'Spectral', serif",
-      },
-    },
-    textMuted: {
-      color: darkMode ? "#98989d" : "#5d5d61",
-    },
-    error: {
-      text: crimson,
-      background: darkMode ? "rgba(176, 27, 27, 0.1)" : "#fff0f0",
-    },
-    text: {
-      primary: darkMode ? gold : "#1A0A0A",
-      secondary: darkMode ? "#98989d" : "#5d5d61",
-    },
-    shadow: {
-      base: darkMode ? "0 4px 12px rgba(0,0,0,0.4)" : "0 4px 12px rgba(197, 160, 40, 0.05)",
-      hover: darkMode ? "0 12px 32px rgba(0,0,0,0.5)" : "0 12px 32px rgba(197, 160, 40, 0.15)",
-    },
-    gold: gold,
-    crimson: crimson,
-  };
-};
+import {
+  API_BASE,
+  getTheme,
+  normalizeProducts,
+  normalizeProduct,
+  parseStock,
+} from "./utils/theme";
+import Header from "./components/Header";
+import SparksEffect from "./components/SparksEffect";
+import Storefront from "./pages/Storefront";
+import WizardingTrunk from "./pages/WizardingTrunk";
+import OrderHistory from "./pages/OrderHistory";
+import AdminConsole from "./pages/AdminConsole";
+import EasterEgg from "./pages/EasterEgg";
 
 function App() {
   const [products, setProducts] = useState([]);
@@ -239,10 +77,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-  if (activeTab === "easteregg") {
-    fetchEasterproducts();
-  }
-}, [activeTab]);
+    if (activeTab === "easteregg") {
+      fetchEasterproducts();
+    }
+  }, [activeTab]);
 
   const toggleDarkMode = () => {
     const nextMode = !darkMode;
@@ -250,63 +88,7 @@ function App() {
     localStorage.setItem("darkMode", nextMode.toString());
   };
 
-  const flooStyle = {
-  position: "fixed",
-  bottom: "20px",
-  right: "20px",
-  opacity: 0.25,
-  transform: "scale(0.8)",
-  transition: "all 0.3s ease",
-  zIndex: 1000,
-};
-
-  const flooHover = {
-  opacity: 1,
-  transform: "scale(1)",
-};
-
   const theme = getTheme(darkMode);
-
-  const PRODUCT_CATEGORIES = [
-    "General",
-    "Electronics",
-    "Accessories",
-    "Home",
-    "Office",
-  ];
-
-  const parseStock = (stockValue) => {
-    if (typeof stockValue === "number") return stockValue;
-    if (typeof stockValue === "string" && stockValue.trim() !== "") {
-      const parsed = parseInt(stockValue, 10);
-      return Number.isNaN(parsed) ? null : parsed;
-    }
-    return null;
-  };
-
-  const formatCurrency = (value) => {
-    const amount = Number(value || 0);
-    return `₹${amount.toFixed(2)}`;
-  };
-
-  const normalizeProduct = (product) => {
-    const id = product.id || product.productId || product.product_id;
-    return {
-      ...product,
-      id,
-      stock: parseStock(product.stock),
-      price:
-        typeof product.price === "number"
-          ? product.price
-          : product.price
-            ? parseFloat(product.price)
-            : 0,
-      category: product.category || "General",
-    };
-  };
-
-  const normalizeProducts = (items) =>
-    Array.isArray(items) ? items.map(normalizeProduct) : [];
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -329,11 +111,10 @@ function App() {
       const data = await res.json();
 
       setEasterProducts(Array.isArray(data) ? data : []);
-    }
-    catch(err){
+    } catch (err) {
       console.log(err);
     }
-  }
+  };
 
   const searchProducts = async () => {
     setLoading(true);
@@ -685,15 +466,15 @@ function App() {
         body: JSON.stringify({ items: cart, total: cartTotal }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      
+
       // Success! Clear cart locally and in DB
       await saveCartItems([]);
       setCart([]);
-      
+
       // Switch to history tab to show the new order
       setActiveTab("history");
       await fetchOrders();
-      
+
       // Magical Success Feedback
       alert("✨ Order Placed Successfully! Your items are flying your way via Owl Post.");
     } catch (err) {
@@ -744,82 +525,19 @@ function App() {
         `}
       </style>
 
-      {sparks.map((spark) => (
-        <div
-          key={spark.id}
-          className="magic-spark"
-          style={{
-            left: spark.x,
-            top: spark.y,
-            width: spark.size,
-            height: spark.size,
-            background: darkMode ? "#64d2ff" : "#C5A028",
-            boxShadow: `0 0 8px ${darkMode ? "#64d2ff" : "#C5A028"}`,
-            "--dx": `${Math.cos(spark.angle) * 40}px`,
-            "--dy": `${Math.sin(spark.angle) * 40}px`,
-          }}
-        />
-      ))}
+      <SparksEffect sparks={sparks} darkMode={darkMode} />
 
       <div style={theme.frame}>
-         {activeTab !== "easteregg" && (
-        <header style={theme.header.container}>
-          <div style={{ alignSelf: "flex-end", marginBottom: "-1rem" }}>
-            <button
-              onClick={toggleDarkMode}
-              style={{
-                ...theme.button.secondary,
-                padding: "0.5rem 1rem",
-                fontSize: "0.85rem",
-              }}
-            >
-              Mode: {darkMode ? "Light" : "Dark"}
-            </button>
-          </div>
-          <h1 style={theme.header.title}>
-            The Diagon Alley
-          </h1>
-          <p style={theme.header.subtitle}>
-            A wizarding marketplace where products appear like magic.
-          </p>
-
-          {/*NEW HIDDEN EASTER EGG BUTTON*/}
-          <button
-          onClick={() => setActiveTab("easteregg")}
-          style={flooStyle}
-          onMouseEnter={(e) => Object.assign(e.currentTarget.style, flooHover)}
-          onMouseLeave={(e) => Object.assign(e.currentTarget.style, flooStyle)}>
-            🪄
-          </button>
-
-          <div style={theme.header.tabsContainer}>
-            {["products", "cart", "history", "admin", "testing"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  if (tab !== "admin") cancelEdit();
-                }}
-                style={
-                  activeTab === tab
-                    ? theme.button.pillActive
-                    : theme.button.pillInactive
-                }
-              >
-                {tab === "products"
-                  ? "The Storefront"
-                  : tab === "cart"
-                    ? "Wizarding Trunk"
-                    : tab === "admin"
-                      ? "Ministry Console"
-                      : tab === "history"
-                        ? "Order History"
-                        : "Arcane Testing"}
-              </button>
-            ))}
-          </div>
-        </header>
-         )}
+        {activeTab !== "easteregg" && (
+          <Header
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            cancelEdit={cancelEdit}
+            darkMode={darkMode}
+            toggleDarkMode={toggleDarkMode}
+            theme={theme}
+          />
+        )}
 
         {activeTab !== "easteregg" && error && (
           <div
@@ -855,865 +573,71 @@ function App() {
 
         {/* --- PRODUCTS TAB --- */}
         {activeTab === "products" && (
-          <div>
-            {/* Magical Search & Filter Cabinet */}
-            <div style={{ marginBottom: "2.5rem" }}>
-              <div
-                style={{
-                  position: "relative",
-                  marginBottom: "1.2rem",
-                  display: "flex",
-                  alignItems: "center",
-                }}
-              >
-                {/* Revelio Eye Icon */}
-                <div
-                  style={{
-                    position: "absolute",
-                    left: "1.25rem",
-                    pointerEvents: "none",
-                    display: "flex",
-                    alignItems: "center",
-                  }}
-                >
-                  <svg
-                    width="22"
-                    height="22"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke={theme.gold}
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                </div>
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Seek magical artifacts..."
-                  style={{
-                    ...theme.input.base,
-                    paddingLeft: "3.5rem",
-                    boxShadow: darkMode
-                      ? "0 4px 20px rgba(0,0,0,0.3)"
-                      : "0 4px 20px rgba(197, 160, 40, 0.05)",
-                  }}
-                />
-              </div>
-
-              <div
-                style={{
-                  display: "flex",
-                  gap: "1rem",
-                  flexWrap: "wrap",
-                  alignItems: "center",
-                }}
-              >
-                <div style={{ flex: 1, display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.9rem", color: theme.text.secondary, fontFamily: "'spectral', serif" }}>
-                    Filter by:
-                  </span>
-                  <select
-                    value={filterCategory}
-                    onChange={(e) => setFilterCategory(e.target.value)}
-                    style={{
-                      ...theme.input.base,
-                      width: "auto",
-                      padding: "0.5rem 1rem",
-                      fontSize: "0.9rem",
-                      borderRadius: "999px",
-                      border: `1px solid ${theme.gold}44`,
-                    }}
-                  >
-                    <option value="All">All Categories</option>
-                    {PRODUCT_CATEGORIES.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-                  <span style={{ fontSize: "0.9rem", color: theme.text.secondary, fontFamily: "'spectral', serif" }}>
-                    Sort by:
-                  </span>
-                  <select
-                    value={sortOption}
-                    onChange={(e) => setSortOption(e.target.value)}
-                    style={{
-                      ...theme.input.base,
-                      width: "auto",
-                      padding: "0.5rem 1rem",
-                      fontSize: "0.9rem",
-                      borderRadius: "999px",
-                      border: `1px solid ${theme.gold}44`,
-                    }}
-                  >
-                    <option value="default">Default Order</option>
-                    <option value="priceLow">Galleons: Low to High</option>
-                    <option value="priceHigh">Galleons: High to Low</option>
-                  </select>
-                  <button onClick={fetchProducts} style={{ ...theme.button.secondary, padding: "0.5rem 1rem", fontSize: "0.85rem" }}>
-                    Refresh Items
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {loading && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "4rem",
-                  color: theme.text.secondary,
-                }}
-              >
-                Loading store inventory...
-              </div>
-            )}
-            {!loading && products.length === 0 && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "4rem",
-                  color: theme.text.secondary,
-                }}
-              >
-                No products found. Start by adding items in the Admin Panel.
-              </div>
-            )}
-
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-                gap: "1.5rem",
-              }}
-            >
-              {products
-                .filter((p) => filterCategory === "All" || p.category === filterCategory)
-                .sort((a, b) => {
-                  if (sortOption === "priceLow") return a.price - b.price;
-                  if (sortOption === "priceHigh") return b.price - a.price;
-                  return 0;
-                })
-                .map((p) => {
-                const productId = p.id || p.productId || p.product_id;
-                return (
-                  <div
-                    key={productId}
-                    style={{
-                      ...theme.section.card,
-                      transition: "all 0.3s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.02)";
-                      e.currentTarget.style.boxShadow = theme.shadow.hover;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                      e.currentTarget.style.boxShadow = theme.shadow.base;
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                        gap: "0",
-                        flex: 1,
-                      }}
-                    >
-                      <h3
-                        style={{
-                          margin: 0,
-                          fontSize: "1.5rem",
-                          color: theme.page.color,
-                          fontWeight: 600,
-                          fontFamily: "'Cinzel', serif",
-                        }}
-                      >
-                        {p.name || "Unnamed Artifact"}
-                      </h3>
-                      <div
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          margin: "0.5rem 0 1rem",
-                        }}
-                      >
-                        <span
-                          style={{
-                            background: darkMode ? "#3a3a3c" : "#eef3ff",
-                            color: darkMode ? "#64d2ff" : "#0f4fff",
-                            borderRadius: "999px",
-                            padding: "0.35rem 0.8rem",
-                            fontSize: "0.8rem",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {p.category || "General"}
-                        </span>
-                      </div>
-                    </div>
-                    <div
-                      style={{
-                        margin: "0 0 0.5rem",
-                        fontSize: "0.95rem",
-                        color: "#86868b",
-                        marginBottom: "1rem",
-                      }}
-                    >
-                      {typeof p.stock === "number" && p.stock >= 0
-                        ? `${p.stock} in stock`
-                        : "Stock unavailable"}
-                    </div>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                        gap: "0",
-                      }}
-                    >
-                      <div
-                        style={{
-                          margin: "0 0 1.5rem",
-                          fontSize: "1.8rem",
-                          fontWeight: 700,
-                          color: theme.page.color,
-                        }}
-                      >
-                        {formatCurrency(p.price)}
-                      </div>
-                      <button
-                        onClick={() => addToCart(p)}
-                        disabled={
-                          cartStatus[productId] === "adding" ||
-                          (typeof p.stock === "number" && p.stock <= 0)
-                        }
-                        style={{
-                          width: "100%",
-                          padding: "0.9rem",
-                          borderRadius: "999px",
-                          cursor:
-                            cartStatus[productId] === "adding" ||
-                            (typeof p.stock === "number" && p.stock <= 0)
-                              ? "not-allowed"
-                              : "pointer",
-                          fontWeight: 500,
-                          color:
-                            cartStatus[productId] === "added"
-                              ? (darkMode ? theme.gold : "#000000")
-                              : "#000000",
-                          background:
-                            cartStatus[productId] === "added"
-                              ? (darkMode ? "rgba(197, 160, 40, 0.1)" : "#e8e8ed")
-                              : cartStatus[productId] === "error"
-                                ? theme.crimson
-                                : typeof p.stock === "number" && p.stock <= 0
-                                  ? (darkMode ? "rgba(176, 27, 27, 0.2)" : "#f8d7da")
-                                  : theme.gold,
-                          transition: "all 0.2s ease",
-                          border: typeof p.stock === "number" && p.stock <= 0
-                            ? `1px solid ${theme.crimson}`
-                            : "none",
-                        }}
-                      >
-                        {typeof p.stock === "number" && p.stock <= 0
-                          ? "Out of Stock"
-                          : cartStatus[productId] === "adding"
-                            ? "Casting…"
-                            : cartStatus[productId] === "added"
-                              ? "In Trunk"
-                              : cartStatus[productId] === "error"
-                                ? "Fizzy! Try Again"
-                                : "Acquire Artifact"}
-
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+          <Storefront
+            products={products}
+            loading={loading}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            filterCategory={filterCategory}
+            setFilterCategory={setFilterCategory}
+            sortOption={sortOption}
+            setSortOption={setSortOption}
+            fetchProducts={fetchProducts}
+            addToCart={addToCart}
+            cartStatus={cartStatus}
+            darkMode={darkMode}
+            theme={theme}
+          />
         )}
 
         {/* --- CART TAB --- */}
         {activeTab === "cart" && (
-          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "2rem",
-              }}
-            >
-              <div>
-                <h2 style={theme.section.title}>Wizarding Trunk</h2>
-                <p style={theme.section.description}>{cartQuantity} artifacts</p>
-              </div>
-              <div style={{ display: "flex", gap: "0.75rem" }}>
-                <button onClick={fetchCart} style={theme.button.secondary}>
-                  Refresh Bag
-                </button>
-                <button onClick={clearCart} style={theme.button.secondary}>
-                  Clear Cart
-                </button>
-              </div>
-            </div>
-
-            {loading && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "4rem",
-                  color: "#86868b",
-                }}
-              >
-                Loading bag contents...
-              </div>
-            )}
-            {!loading && cart.length === 0 && (
-              <div
-                style={{
-                  textAlign: "center",
-                  padding: "4rem",
-                  color: "#86868b",
-                }}
-              >
-                Your bag is empty.
-              </div>
-            )}
-
-            <div
-              style={{
-                ...theme.section.card,
-                padding: 0,
-                overflow: "hidden",
-              }}
-            >
-              {cart.map((item, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    padding: "1.5rem 2rem",
-                    borderBottom:
-                      idx !== cart.length - 1 ? `1px solid ${darkMode ? "rgba(255,255,255,0.1)" : "#f5f5f7"}` : "none",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    gap: "1rem",
-                  }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        color: theme.page.color,
-                        fontSize: "1.1rem",
-                      }}
-                    >
-                      {item.name || item.productId}
-                    </div>
-                    <div
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "0.5rem",
-                        marginTop: "0.75rem",
-                      }}
-                    >
-                      <span
-                        style={{
-                          background: darkMode ? "#3a3a3c" : "#eef3ff",
-                          color: darkMode ? "#64d2ff" : "#0f4fff",
-                          borderRadius: "999px",
-                          padding: "0.35rem 0.8rem",
-                          fontSize: "0.8rem",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {products.find(
-                          (p) =>
-                            p.id === item.productId ||
-                            p.productId === item.productId ||
-                            p.product_id === item.productId,
-                        )?.category || "General"}
-                      </span>
-                    </div>
-                    <div
-                      style={{
-                        marginTop: "1rem",
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "0.75rem",
-                      }}
-                    >
-                      <button
-                        onClick={() => updateCartQuantity(item.productId, -1)}
-                        disabled={cartUpdating || item.quantity <= 1}
-                        style={{
-                          ...theme.button.secondary,
-                          minWidth: "42px",
-                          padding: "0.5rem 0.75rem",
-                        }}
-                      >
-                        −
-                      </button>
-                      <span
-                        style={{
-                          minWidth: "28px",
-                          textAlign: "center",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {item.quantity}
-                      </span>
-                      <button
-                        onClick={() => updateCartQuantity(item.productId, 1)}
-                        disabled={cartUpdating}
-                        style={{
-                          ...theme.button.secondary,
-                          minWidth: "42px",
-                          padding: "0.5rem 0.75rem",
-                        }}
-                      >
-                        +
-                      </button>
-                      <button
-                        onClick={() => removeCartItem(item.productId)}
-                        disabled={cartUpdating}
-                        style={{
-                          ...theme.button.secondary,
-                          background: darkMode ? "rgba(255, 149, 0, 0.1)" : "#fff4e5",
-                          color: darkMode ? "#ff9500" : "#b35c00",
-                          border: darkMode ? "1px solid rgba(255, 149, 0, 0.2)" : "1px solid #f5d7a2",
-                          padding: "0.5rem 0.9rem",
-                        }}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      color: theme.page.color,
-                      fontSize: "1.2rem",
-                      minWidth: "120px",
-                      textAlign: "right",
-                    }}
-                  >
-                    {formatCurrency(
-                      parseFloat(item.price || 0) * item.quantity,
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {cart.length > 0 && (
-              <div
-                style={{
-                  textAlign: "right",
-                  marginTop: "2rem",
-                  padding: "1.5rem",
-                  background: darkMode ? "rgba(197, 160, 40, 0.05)" : "#fdfbf7",
-                  borderRadius: "14px",
-                  border: `1px solid ${theme.gold}44`
-                }}
-              >
-                <div style={{ fontSize: "1.8rem", fontWeight: 700, color: theme.page.color, marginBottom: "1.5rem" }}>
-                  Galleons Total: {formatCurrency(cartTotal)}
-                </div>
-                <button
-                  onClick={placeOrder}
-                  disabled={placingOrder}
-                  style={{
-                    ...theme.button.primary,
-                    padding: "0.7rem 1.8rem",
-                    fontSize: "1rem",
-                    letterSpacing: "0.5px",
-                    boxShadow: "0 6px 15px rgba(197, 160, 40, 0.25)"
-                  }}
-                >
-                  {placingOrder ? "Casting Order..." : "Finalize Purchase (Place Order)"}
-                </button>
-              </div>
-            )}
-          </div>
+          <WizardingTrunk
+            cart={cart}
+            loading={loading}
+            cartQuantity={cartQuantity}
+            fetchCart={fetchCart}
+            clearCart={clearCart}
+            updateCartQuantity={updateCartQuantity}
+            cartUpdating={cartUpdating}
+            removeCartItem={removeCartItem}
+            products={products}
+            cartTotal={cartTotal}
+            placeOrder={placeOrder}
+            placingOrder={placingOrder}
+            darkMode={darkMode}
+            theme={theme}
+          />
         )}
 
         {/* --- ORDER HISTORY TAB --- */}
         {activeTab === "history" && (
-          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-            <h2 style={{ ...theme.section.title, marginBottom: "2rem", textAlign: "center" }}>Past Scrolls of Purchase</h2>
-            
-            {loading && <p style={{ textAlign: "center", fontStyle: "italic", opacity: 0.6 }}>Consulting the Ministry archives...</p>}
-            
-            {!loading && orders.length === 0 && (
-              <div style={{ ...theme.section.card, textAlign: "center", padding: "4rem" }}>
-                <p style={{ fontSize: "1.2rem", opacity: 0.6 }}>No magical records found. Perhaps a memory charm was used?</p>
-              </div>
-            )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              {orders.map((order) => (
-                <div 
-                  key={order.orderId} 
-                  style={{ 
-                    ...theme.section.card, 
-                    borderLeft: `5px solid ${theme.gold}`,
-                    background: darkMode ? "rgba(212, 175, 55, 0.03)" : "#fffcf8"
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(197, 160, 40, 0.1)", paddingBottom: "1rem", marginBottom: "1rem" }}>
-                    <div>
-                      <span style={{ color: theme.gold, fontWeight: 700, fontSize: "1.1rem" }}>{order.orderId}</span>
-                      <div style={{ fontSize: "0.85rem", opacity: 0.6, marginTop: "0.2rem" }}>
-                        Placed on {new Date(order.timestamp * 1000).toLocaleString()}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <span style={{ fontWeight: 700, fontSize: "1.2rem", color: theme.gold }}>{formatCurrency(order.total)}</span>
-                      <div style={{ fontSize: "0.7rem", color: "#2ecc71", textTransform: "uppercase", fontWeight: 800 }}>{order.status}</div>
-                    </div>
-                  </div>
-                  
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                    {order.items.map((item, idx) => (
-                      <span key={idx} style={{ 
-                        background: darkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)", 
-                        padding: "0.3rem 0.8rem", 
-                        borderRadius: "8px", 
-                        fontSize: "0.85rem" 
-                      }}>
-                        {item.quantity}x {item.name}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button 
-              onClick={fetchOrders} 
-              style={{ ...theme.button.secondary, width: "100%", marginTop: "2rem" }}
-            >
-              Refresh Archives
-            </button>
-          </div>
+          <OrderHistory
+            orders={orders}
+            loading={loading}
+            fetchOrders={fetchOrders}
+            darkMode={darkMode}
+            theme={theme}
+          />
         )}
 
         {/* --- ADMIN TAB --- */}
         {activeTab === "admin" && (
-          <div style={{ maxWidth: "800px", margin: "0 auto" }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "1.5rem",
-              }}
-            >
-              <h2 style={theme.section.title}>Ministry Catalog Console</h2>
-              <button onClick={cancelEdit} style={theme.button.secondary}>
-                Reset Editor
-              </button>
-            </div>
-
-            <div style={{ ...theme.section.card, marginBottom: "2rem" }}>
-              <h3
-                style={{
-                  margin: "0 0 1.5rem",
-                  color: theme.page.color,
-                  fontSize: "1.5rem",
-                  fontWeight: 600,
-                  fontFamily: "'Cinzel', serif",
-                }}
-              >
-                {editingId ? "Rewrite Artifact Data" : "Publish New Artifact"}
-              </h3>
-
-              <div
-                style={{
-                  display: "grid",
-                  gridTemplateColumns: "1fr 1fr",
-                  gap: "1.5rem",
-                  marginBottom: "1.5rem",
-                }}
-              >
-                <div>
-                  <label
-                    style={{
-                      fontSize: "0.9rem",
-                      color: "#86868b",
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Product Name
-                  </label>
-                  <input
-                    value={newProduct.name}
-                    onChange={(e) =>
-                      setNewProduct((p) => ({ ...p, name: e.target.value }))
-                    }
-                    placeholder="e.g. AirPods Pro"
-                    style={theme.input.base}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: "0.9rem",
-                      color: "#86868b",
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Price (₹)
-                  </label>
-                  <input
-                    value={newProduct.price}
-                    onChange={(e) =>
-                      setNewProduct((p) => ({ ...p, price: e.target.value }))
-                    }
-                    type="number"
-                    placeholder="e.g. 249.00"
-                    style={theme.input.base}
-                  />
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: "0.9rem",
-                      color: "#86868b",
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Category
-                  </label>
-                  <select
-                    value={newProduct.category}
-                    onChange={(e) =>
-                      setNewProduct((p) => ({ ...p, category: e.target.value }))
-                    }
-                    style={theme.input.base}
-                  >
-                    {PRODUCT_CATEGORIES.map((category) => (
-                      <option key={category} value={category}>
-                        {category}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label
-                    style={{
-                      fontSize: "0.9rem",
-                      color: "#86868b",
-                      display: "block",
-                      marginBottom: "0.5rem",
-                      fontWeight: 500,
-                    }}
-                  >
-                    Stock Quantity
-                  </label>
-                  <input
-                    value={newProduct.stock}
-                    onChange={(e) =>
-                      setNewProduct((p) => ({ ...p, stock: e.target.value }))
-                    }
-                    type="number"
-                    placeholder="e.g. 50"
-                    style={theme.input.base}
-                  />
-                </div>
-              </div>
-
-              <div style={{ display: "flex", gap: "1rem" }}>
-                <button
-                  onClick={saveProduct}
-                  disabled={
-                    addingProduct || !newProduct.name || !newProduct.price
-                  }
-                  style={{
-                    ...theme.button.primary,
-                    flex: 1,
-                    opacity: !newProduct.name || !newProduct.price ? 0.5 : 1,
-                    cursor:
-                      !newProduct.name || !newProduct.price
-                        ? "not-allowed"
-                        : "pointer",
-                  }}
-                >
-                  {addingProduct
-                    ? "Processing…"
-                    : editingId
-                      ? "Save Changes"
-                      : "Save Product"}
-                </button>
-                {editingId && (
-                  <button
-                    onClick={cancelEdit}
-                    style={{ ...theme.button.secondary, flex: 1 }}
-                  >
-                    Cancel
-                  </button>
-                )}
-              </div>
-            </div>
-
-            <div style={{ ...theme.section.card }}>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  marginBottom: "1.5rem",
-                }}
-              >
-                <h3
-                  style={{
-                    margin: 0,
-                    color: theme.page.color,
-                    fontSize: "1.5rem",
-                    fontWeight: 600,
-                    fontFamily: "'Cinzel', serif",
-                  }}
-                >
-                  Arcane Database
-                </h3>
-                <button
-                  onClick={fetchProducts}
-                  style={{
-                    ...theme.button.secondary,
-                    padding: "0.5rem 1rem",
-                    fontSize: "0.85rem",
-                  }}
-                >
-                  Refresh Items
-                </button>
-              </div>
-
-              {loading && (
-                <p
-                  style={{
-                    textAlign: "center",
-                    color: "#86868b",
-                    padding: "2rem",
-                  }}
-                >
-                  Synchronizing backend...
-                </p>
-              )}
-              {!loading && products.length === 0 && (
-                <p
-                  style={{
-                    textAlign: "center",
-                    color: "#86868b",
-                    padding: "2rem",
-                  }}
-                >
-                  Database is currently empty.
-                </p>
-              )}
-
-              <div
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "0.8rem",
-                }}
-              >
-                {products.map((p) => {
-                  const productId = p.id || p.productId || p.product_id;
-                  return (
-                    <div
-                      key={productId}
-                      style={{
-                        background:
-                          editingId === productId ? (darkMode ? "rgba(0,113,227,0.1)" : "#f5f5f7") : theme.section.card.background,
-                        border:
-                          editingId === productId
-                            ? "1px solid #0071e3"
-                            : `1px solid ${darkMode ? "rgba(255,255,255,0.1)" : "#e5e5ea"}`,
-                        borderRadius: "14px",
-                        padding: "1.2rem",
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      <div>
-                        <div
-                          style={{
-                            fontWeight: 600,
-                            color: theme.page.color,
-                            fontSize: "1.05rem",
-                          }}
-                        >
-                          {p.name}
-                        </div>
-                        <div
-                          style={{
-                            color: "#86868b",
-                            fontSize: "0.9rem",
-                            marginTop: "0.3rem",
-                          }}
-                        >
-                          SKU: {productId?.substring(0, 8)} •{" "}
-                          <span style={{ fontWeight: 600, color: theme.page.color }}>
-                            {formatCurrency(p.price)}
-                          </span>
-                        </div>
-                      </div>
-                      <div style={{ display: "flex", gap: "0.5rem" }}>
-                        <button
-                          onClick={() => startEdit(p)}
-                          style={{
-                            ...theme.button.secondary,
-                            background:
-                              editingId === productId ? "#0071e3" : theme.button.secondary.background,
-                            color: editingId === productId ? "#fff" : theme.button.secondary.color,
-                            padding: "0.5rem 1rem",
-                            fontSize: "0.85rem",
-                          }}
-                        >
-                          {editingId === productId ? "Editing" : "Edit"}
-                        </button>
-                        <button
-                          onClick={() => deleteProduct(productId)}
-                          style={{
-                            ...theme.button.secondary,
-                            padding: "0.5rem 1rem",
-                            fontSize: "0.85rem",
-                            background: darkMode ? "rgba(255, 59, 48, 0.1)" : "#fef0f0",
-                            color: "#ff3b30",
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          <AdminConsole
+            newProduct={newProduct}
+            setNewProduct={setNewProduct}
+            editingId={editingId}
+            cancelEdit={cancelEdit}
+            saveProduct={saveProduct}
+            addingProduct={addingProduct}
+            products={products}
+            loading={loading}
+            startEdit={startEdit}
+            deleteProduct={deleteProduct}
+            fetchProducts={fetchProducts}
+            darkMode={darkMode}
+            theme={theme}
+          />
         )}
 
         {/* --- TESTING TAB --- */}
@@ -1723,19 +647,11 @@ function App() {
 
         {/*EASTER EGG TAB*/}
         {activeTab === "easteregg" && (
-          <div>
-            <h1>EASTER EGG FOUND!</h1>
-            <button
-            onClick={() => setActiveTab("products")}
-            style={theme.button.primary}>
-              REAL WORLD
-            </button>
-          {easterProducts.map((item) => (
-            <div key={item.id}>
-              <div style = {{...theme.section.card}}>{item.name} - ${item.price}</div>
-            </div>
-          ))}
-          </div>
+          <EasterEgg
+            setActiveTab={setActiveTab}
+            easterProducts={easterProducts}
+            theme={theme}
+          />
         )}
       </div>
     </div>
