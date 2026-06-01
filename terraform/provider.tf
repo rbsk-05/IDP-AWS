@@ -9,5 +9,5 @@ terraform {
 
 provider "aws" {
   region  = "ap-southeast-1"
-  profile = "idp-sbx-trn-lab-01"
+  profile = "AWS-Academy-Developer-726101441380"
 }
