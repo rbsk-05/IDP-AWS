@@ -30,7 +30,9 @@ resource "aws_api_gateway_deployment" "main" {
     module.product,
     module.cart,
     module.search,
-    module.easter
+    module.easter,
+    aws_api_gateway_integration.users,
+    aws_api_gateway_integration.users_options
   ]
 }
 

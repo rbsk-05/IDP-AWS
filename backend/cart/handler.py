@@ -41,10 +41,33 @@ def respond(status_code, body):
         'body': json.dumps(body, cls=DecimalEncoder)
     }
 
+def get_user_id(event):
+    claims = event.get('requestContext', {}).get('authorizer', {}).get('claims', {})
+    user_id = claims.get('sub') or claims.get('email')
+    if not user_id:
+        headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
+        auth = headers.get('authorization', 'anonymous')
+        user_id = auth.replace('Bearer ', '').strip()
+        
+    # Robustly decode Cognito JWT tokens to extract email/sub if sent directly in Authorization header
+    if isinstance(user_id, str) and user_id.startswith('eyJ') and user_id.count('.') == 2:
+        try:
+            import base64
+            payload_b64 = user_id.split('.')[1]
+            payload_b64 += '=' * (-len(payload_b64) % 4)
+            payload_json = base64.b64decode(payload_b64).decode('utf-8')
+            payload = json.loads(payload_json)
+            decoded_id = payload.get('email') or payload.get('sub')
+            if decoded_id:
+                user_id = decoded_id
+        except Exception as e:
+            print(f"[WARNING] Failed to decode JWT token: {str(e)}")
+            
+    return user_id if user_id else 'anonymous'
+
 def lambda_handler(event, context):
     http_method = event.get('httpMethod', '')
-    claims = event.get('requestContext', {}).get('authorizer', {}).get('claims', {})
-    user_id = claims.get('sub', 'anonymous')
+    user_id = get_user_id(event)
     table = get_table(event)
 
     if http_method == 'OPTIONS':
@@ -103,7 +126,6 @@ def update_cart(table, user_id, body):
         return respond(200, {'message': 'Cart updated', 'itemCount': len(safe_items)})
     except Exception as e:
         return respond(500, {'error': str(e)})
-
 
 def delete_cart(table, user_id, body=None):
     if not table:

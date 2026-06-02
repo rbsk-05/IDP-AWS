@@ -41,6 +41,30 @@ def respond(status_code, body):
         'body': json.dumps(body, cls=DecimalEncoder)
     }
 
+def get_user_id(event):
+    claims = event.get('requestContext', {}).get('authorizer', {}).get('claims', {})
+    user_id = claims.get('sub') or claims.get('email')
+    if not user_id:
+        headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
+        auth = headers.get('authorization', 'anonymous')
+        user_id = auth.replace('Bearer ', '').strip()
+        
+    # Robustly decode Cognito JWT tokens to extract email/sub if sent directly in Authorization header
+    if isinstance(user_id, str) and user_id.startswith('eyJ') and user_id.count('.') == 2:
+        try:
+            import base64
+            payload_b64 = user_id.split('.')[1]
+            payload_b64 += '=' * (-len(payload_b64) % 4)
+            payload_json = base64.b64decode(payload_b64).decode('utf-8')
+            payload = json.loads(payload_json)
+            decoded_id = payload.get('email') or payload.get('sub')
+            if decoded_id:
+                user_id = decoded_id
+        except Exception as e:
+            print(f"[WARNING] Failed to decode JWT token: {str(e)}")
+            
+    return user_id if user_id else 'anonymous'
+
 def lambda_handler(event, context):
     http_method = event.get('httpMethod', '')
     query_string = event.get('queryStringParameters') or {}
@@ -52,16 +76,26 @@ def lambda_handler(event, context):
         return respond(200, {'message': 'ok'})
 
     if http_method == 'GET':
-        return search(table, q)
+        return search(table, q, event)
 
     return respond(400, {'message': f'Unsupported method {http_method}'})
 
-def search(table, query):
+def search(table, query, event):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:
+        user_id = get_user_id(event)
         response = table.scan()
         items = response.get('Items', [])
+
+        # If standard user, filter so search doesn't show other users' products (except seeds and admin products)
+        if user_id not in ['admin@gmail.com', 'mock-admin-token-12345']:
+            items = [
+                item for item in items
+                if item.get('userId', 'anonymous') == user_id 
+                or item.get('userId', 'anonymous') == 'anonymous'
+                or item.get('userId', 'anonymous') in ['admin@gmail.com', 'mock-admin-token-12345']
+            ]
 
         if query:
             results = [item for item in items if query in json.dumps(item, cls=DecimalEncoder).lower()]

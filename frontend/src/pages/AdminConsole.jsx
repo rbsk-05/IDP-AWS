@@ -287,25 +287,48 @@ function AdminConsole({
                 <div style={{ display: "flex", gap: "0.5rem" }}>
                   <button
                     onClick={() => startEdit(p)}
+                    disabled={!p.userId || p.userId === "anonymous"}
                     style={{
                       ...theme.button.secondary,
                       background:
-                        editingId === productId ? "#0071e3" : theme.button.secondary.background,
-                      color: editingId === productId ? "#fff" : theme.button.secondary.color,
+                        editingId === productId
+                          ? "#0071e3"
+                          : (!p.userId || p.userId === "anonymous")
+                            ? (darkMode ? "rgba(255,255,255,0.03)" : "#f5f5f7")
+                            : theme.button.secondary.background,
+                      color:
+                        editingId === productId
+                          ? "#fff"
+                          : (!p.userId || p.userId === "anonymous")
+                            ? (darkMode ? "rgba(255,255,255,0.25)" : "#a1a1a6")
+                            : theme.button.secondary.color,
+                      borderColor: (!p.userId || p.userId === "anonymous") ? (darkMode ? "rgba(255,255,255,0.05)" : "#d2d2d7") : undefined,
                       padding: "0.5rem 1rem",
                       fontSize: "0.85rem",
+                      cursor: (!p.userId || p.userId === "anonymous") ? "not-allowed" : "pointer",
+                      opacity: (!p.userId || p.userId === "anonymous") ? 0.6 : 1,
                     }}
                   >
                     {editingId === productId ? "Editing" : "Edit"}
                   </button>
                   <button
                     onClick={() => deleteProduct(productId)}
+                    disabled={!p.userId || p.userId === "anonymous"}
                     style={{
                       ...theme.button.secondary,
                       padding: "0.5rem 1rem",
                       fontSize: "0.85rem",
-                      background: darkMode ? "rgba(255, 59, 48, 0.1)" : "#fef0f0",
-                      color: "#ff3b30",
+                      background:
+                        (!p.userId || p.userId === "anonymous")
+                          ? (darkMode ? "rgba(255,255,255,0.03)" : "#f5f5f7")
+                          : (darkMode ? "rgba(255, 59, 48, 0.1)" : "#fef0f0"),
+                      color:
+                        (!p.userId || p.userId === "anonymous")
+                          ? (darkMode ? "rgba(255,255,255,0.25)" : "#a1a1a6")
+                          : "#ff3b30",
+                      borderColor: (!p.userId || p.userId === "anonymous") ? (darkMode ? "rgba(255,255,255,0.05)" : "#d2d2d7") : undefined,
+                      cursor: (!p.userId || p.userId === "anonymous") ? "not-allowed" : "pointer",
+                      opacity: (!p.userId || p.userId === "anonymous") ? 0.6 : 1,
                     }}
                   >
                     Delete

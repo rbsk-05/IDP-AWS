@@ -22,21 +22,18 @@ function Header({
   darkMode,
   toggleDarkMode,
   theme,
+  currentUser,
+  onSignOut,
 }) {
+  const userRole = currentUser?.role || "user";
+  const tabs =
+    userRole === "admin"
+      ? ["products", "cart", "history", "admin", "testing"]
+      : ["products", "cart", "history"];
+
   return (
-    <header style={theme.header.container}>
-      <div style={{ alignSelf: "flex-end", marginBottom: "-1rem" }}>
-        <button
-          onClick={toggleDarkMode}
-          style={{
-            ...theme.button.secondary,
-            padding: "0.5rem 1rem",
-            fontSize: "0.85rem",
-          }}
-        >
-          Mode: {darkMode ? "Light" : "Dark"}
-        </button>
-      </div>
+    <header style={{ ...theme.header.container, paddingTop: "0.5rem" }}>
+
       <h1 style={theme.header.title}>
         The Diagon Alley
       </h1>
@@ -44,18 +41,20 @@ function Header({
         A wizarding marketplace where products appear like magic.
       </p>
 
-      {/*NEW HIDDEN EASTER EGG BUTTON*/}
-      <button
-        onClick={() => setActiveTab("easteregg")}
-        style={flooStyle}
-        onMouseEnter={(e) => Object.assign(e.currentTarget.style, flooHover)}
-        onMouseLeave={(e) => Object.assign(e.currentTarget.style, flooStyle)}
-      >
-        🪄
-      </button>
+      {/*NEW HIDDEN EASTER EGG BUTTON - Only visible to admin! */}
+      {userRole === "admin" && (
+        <button
+          onClick={() => setActiveTab("easteregg")}
+          style={flooStyle}
+          onMouseEnter={(e) => Object.assign(e.currentTarget.style, flooHover)}
+          onMouseLeave={(e) => Object.assign(e.currentTarget.style, flooStyle)}
+        >
+          🪄
+        </button>
+      )}
 
       <div style={theme.header.tabsContainer}>
-        {["products", "cart", "history", "admin", "testing"].map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab}
             onClick={() => {

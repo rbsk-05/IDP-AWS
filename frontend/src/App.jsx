@@ -14,8 +14,14 @@ import WizardingTrunk from "./pages/WizardingTrunk";
 import OrderHistory from "./pages/OrderHistory";
 import AdminConsole from "./pages/AdminConsole";
 import EasterEgg from "./pages/EasterEgg";
+import AuthPage from "./pages/AuthPage";
 
 function App() {
+  const [currentUser, setCurrentUser] = useState(() => {
+    const saved = localStorage.getItem("currentUser");
+    return saved ? JSON.parse(saved) : null;
+  });
+
   const [products, setProducts] = useState([]);
   const [cart, setCart] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -43,18 +49,27 @@ function App() {
 
   const [easterProducts, setEasterProducts] = useState([]);
 
+  // Fetch authentication headers
+  const getAuthHeaders = () => {
+    if (currentUser && currentUser.token) {
+      return {
+        Authorization: currentUser.token,
+      };
+    }
+    return {};
+  };
+
   // Dynamic Search Logic (300ms Debounce)
   useEffect(() => {
+    if (!currentUser) return;
     const delayDebounceFn = setTimeout(() => {
-      // Avoid initial fetch if query is empty and we have products,
-      // but typically we want fresh results if query changes.
       if (activeTab === "products") {
         searchProducts();
       }
     }, 300);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [searchQuery]);
+  }, [searchQuery, currentUser]);
 
   useEffect(() => {
     const handleGlobalClick = (e) => {
@@ -77,10 +92,11 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (activeTab === "easteregg") {
+    if (!currentUser) return;
+    if (activeTab === "easteregg" && currentUser.role === "admin") {
       fetchEasterproducts();
     }
-  }, [activeTab]);
+  }, [activeTab, currentUser]);
 
   const toggleDarkMode = () => {
     const nextMode = !darkMode;
@@ -90,11 +106,27 @@ function App() {
 
   const theme = getTheme(darkMode);
 
+  const handleLoginSuccess = (user) => {
+    setCurrentUser(user);
+    localStorage.setItem("currentUser", JSON.stringify(user));
+    setActiveTab("products");
+  };
+
+  const handleSignOut = () => {
+    setCurrentUser(null);
+    localStorage.removeItem("currentUser");
+    setCart([]);
+    setOrders([]);
+    setActiveTab("products");
+  };
+
   const fetchProducts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/products`);
+      const res = await fetch(`${API_BASE}/products`, {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
       const data = await res.json();
       setProducts(normalizeProducts(data));
@@ -107,7 +139,9 @@ function App() {
 
   const fetchEasterproducts = async () => {
     try {
-      const res = await fetch(`${API_BASE}/easter`);
+      const res = await fetch(`${API_BASE}/easter`, {
+        headers: getAuthHeaders(),
+      });
       const data = await res.json();
 
       setEasterProducts(Array.isArray(data) ? data : []);
@@ -122,6 +156,9 @@ function App() {
     try {
       const res = await fetch(
         `${API_BASE}/search?q=${encodeURIComponent(searchQuery)}`,
+        {
+          headers: getAuthHeaders(),
+        }
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
@@ -137,7 +174,9 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/cart`);
+      const res = await fetch(`${API_BASE}/cart`, {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setCart(Array.isArray(data?.items) ? data.items : []);
@@ -152,7 +191,10 @@ function App() {
     setError(null);
     const res = await fetch(`${API_BASE}/cart`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
       body: JSON.stringify({ items }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -178,7 +220,10 @@ function App() {
 
     const res = await fetch(`${API_BASE}/products/${productId}`, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...getAuthHeaders(),
+      },
       body: JSON.stringify(payload),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -200,7 +245,9 @@ function App() {
 
     setCartStatus((prev) => ({ ...prev, [productId]: "adding" }));
     try {
-      const currentCartResponse = await fetch(`${API_BASE}/cart`);
+      const currentCartResponse = await fetch(`${API_BASE}/cart`, {
+        headers: getAuthHeaders(),
+      });
       if (!currentCartResponse.ok)
         throw new Error(`HTTP ${currentCartResponse.status}`);
       const currentCart = await currentCartResponse.json();
@@ -385,7 +432,10 @@ function App() {
       }
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -406,6 +456,7 @@ function App() {
     try {
       const res = await fetch(`${API_BASE}/products/${id}`, {
         method: "DELETE",
+        headers: getAuthHeaders(),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await fetchProducts();
@@ -444,7 +495,9 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/orders`);
+      const res = await fetch(`${API_BASE}/orders`, {
+        headers: getAuthHeaders(),
+      });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setOrders(Array.isArray(data) ? data : []);
@@ -462,7 +515,10 @@ function App() {
     try {
       const res = await fetch(`${API_BASE}/orders`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(),
+        },
         body: JSON.stringify({ items: cart, total: cartTotal }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -476,7 +532,9 @@ function App() {
       await fetchOrders();
 
       // Magical Success Feedback
-      alert("✨ Order Placed Successfully! Your items are flying your way via Owl Post.");
+      alert(
+        "✨ Order Placed Successfully! Your items are flying your way via Owl Post."
+      );
     } catch (err) {
       setError(`Failed to place order: ${err.message}`);
     } finally {
@@ -485,19 +543,188 @@ function App() {
   };
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    if (currentUser) {
+      fetchProducts();
+    }
+  }, [currentUser]);
 
   useEffect(() => {
+    if (!currentUser) return;
     if (activeTab === "cart") fetchCart();
     if (activeTab === "history") fetchOrders();
-  }, [activeTab]);
+  }, [activeTab, currentUser]);
 
   const cartTotal = cart.reduce(
     (sum, item) => sum + parseFloat(item.price || 0) * item.quantity,
     0,
   );
   const cartQuantity = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const renderTopBar = () => {
+    return (
+      <div
+        style={{
+          width: "100%",
+          boxSizing: "border-box",
+          padding: "1rem 2rem",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontFamily: "'Spectral', serif",
+          borderBottom: darkMode ? "1px solid rgba(255, 255, 255, 0.05)" : "1px solid rgba(0, 0, 0, 0.05)",
+          background: darkMode ? "rgba(17, 17, 20, 0.5)" : "rgba(253, 251, 247, 0.5)",
+          backdropFilter: "blur(10px)",
+          position: "sticky",
+          top: 0,
+          zIndex: 1000,
+        }}
+      >
+        {/* Left Side: Theme Toggle Icon and Profile Info */}
+        <div style={{ display: "flex", alignItems: "center", gap: "1.5rem" }}>
+          {/* Mode Toggle Button styled as an Icon */}
+          <button
+            onClick={toggleDarkMode}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              padding: "0.25rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "50%",
+              width: "36px",
+              height: "36px",
+              backgroundColor: darkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+              transition: "all 0.3s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = darkMode ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.07)";
+              e.currentTarget.style.transform = "scale(1.05)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = darkMode ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)";
+              e.currentTarget.style.transform = "scale(1)";
+            }}
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {darkMode ? (
+              /* Sun Icon for switching to light mode */
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5" fill={theme.gold} />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            ) : (
+              /* Moon Icon for switching to dark mode */
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={theme.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" fill={theme.gold} />
+              </svg>
+            )}
+          </button>
+
+          {/* User Profile Info (if authenticated) */}
+          {currentUser && (
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <span
+                style={{
+                  background: darkMode ? "rgba(197, 160, 40, 0.1)" : "#fdfcf0",
+                  border: `1px solid ${theme.gold}44`,
+                  borderRadius: "999px",
+                  padding: "0.4rem 1rem",
+                  fontSize: "0.85rem",
+                  color: theme.gold,
+                  fontWeight: 500,
+                }}
+              >
+                🔮 Mage: <strong>{currentUser.email}</strong> ({currentUser.role || "Initiate"})
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Right Side: Sign Out Button (if authenticated) */}
+        <div>
+          {currentUser ? (
+            <button
+              onClick={handleSignOut}
+              style={{
+                background: "none",
+                border: "none",
+                color: darkMode ? "#98989d" : "#5d5d61",
+                cursor: "pointer",
+                fontSize: "0.9rem",
+                textDecoration: "underline",
+                padding: "0.5rem 1rem",
+                transition: "all 0.2s ease",
+                fontWeight: 500,
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.color = theme.crimson;
+                e.target.style.transform = "scale(1.03)";
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.color = darkMode ? "#98989d" : "#5d5d61";
+                e.target.style.transform = "scale(1)";
+              }}
+            >
+              Sign Out
+            </button>
+          ) : (
+            <span style={{ fontSize: "0.85rem", color: theme.text.secondary, fontStyle: "italic" }}>
+              Secure Wizarding Portal
+            </span>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  // If not authenticated, force AuthPage portal login
+  if (!currentUser) {
+    return (
+      <div style={theme.page}>
+        <style>
+          {`
+            body {
+              margin: 0;
+              padding: 0;
+              overflow-x: hidden;
+            }
+            button, a, input, select, textarea, [role="button"] {
+              cursor: inherit !important;
+            }
+            @keyframes spark-ping {
+              0% { transform: translate(0, 0) scale(1); opacity: 1; }
+              100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
+            }
+            .magic-spark {
+              position: fixed;
+              pointer-events: none;
+              border-radius: 50%;
+              z-index: 9999;
+              animation: spark-ping 0.6s ease-out forwards;
+            }
+          `}
+        </style>
+        {renderTopBar()}
+        <SparksEffect sparks={sparks} darkMode={darkMode} />
+        <AuthPage
+          onLoginSuccess={handleLoginSuccess}
+          theme={theme}
+          darkMode={darkMode}
+        />
+      </div>
+    );
+  }
+
+  const userRole = currentUser.role || "user";
 
   return (
     <div style={theme.page}>
@@ -525,6 +752,8 @@ function App() {
         `}
       </style>
 
+      {renderTopBar()}
+
       <SparksEffect sparks={sparks} darkMode={darkMode} />
 
       <div style={theme.frame}>
@@ -536,6 +765,8 @@ function App() {
             darkMode={darkMode}
             toggleDarkMode={toggleDarkMode}
             theme={theme}
+            currentUser={currentUser}
+            onSignOut={handleSignOut}
           />
         )}
 
@@ -621,8 +852,8 @@ function App() {
           />
         )}
 
-        {/* --- ADMIN TAB --- */}
-        {activeTab === "admin" && (
+        {/* --- ADMIN TAB (Admin Only) --- */}
+        {activeTab === "admin" && userRole === "admin" && (
           <AdminConsole
             newProduct={newProduct}
             setNewProduct={setNewProduct}
@@ -640,13 +871,13 @@ function App() {
           />
         )}
 
-        {/* --- TESTING TAB --- */}
-        {activeTab === "testing" && (
+        {/* --- TESTING TAB (Admin Only) --- */}
+        {activeTab === "testing" && userRole === "admin" && (
           <TestDashboard darkMode={darkMode} />
         )}
 
-        {/*EASTER EGG TAB*/}
-        {activeTab === "easteregg" && (
+        {/* EASTER EGG TAB (Admin Only) */}
+        {activeTab === "easteregg" && userRole === "admin" && (
           <EasterEgg
             setActiveTab={setActiveTab}
             easterProducts={easterProducts}

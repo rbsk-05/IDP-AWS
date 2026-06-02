@@ -57,7 +57,7 @@ export const getTheme = (darkMode) => {
       },
       subtitle: {
         fontFamily: "'Spectral', serif",
-        margin: "0.5rem 0 0",
+        margin: "0.5rem auto 0",
         fontSize: "1.2rem",
         fontStyle: "italic",
         fontWeight: 400,

@@ -43,10 +43,33 @@ def respond(status_code, body):
         'body': json.dumps(body, cls=DecimalEncoder)
     }
 
+def get_user_id(event):
+    claims = event.get('requestContext', {}).get('authorizer', {}).get('claims', {})
+    user_id = claims.get('sub') or claims.get('email')
+    if not user_id:
+        headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
+        auth = headers.get('authorization', 'anonymous')
+        user_id = auth.replace('Bearer ', '').strip()
+        
+    # Robustly decode Cognito JWT tokens to extract email/sub if sent directly in Authorization header
+    if isinstance(user_id, str) and user_id.startswith('eyJ') and user_id.count('.') == 2:
+        try:
+            import base64
+            payload_b64 = user_id.split('.')[1]
+            payload_b64 += '=' * (-len(payload_b64) % 4)
+            payload_json = base64.b64decode(payload_b64).decode('utf-8')
+            payload = json.loads(payload_json)
+            decoded_id = payload.get('email') or payload.get('sub')
+            if decoded_id:
+                user_id = decoded_id
+        except Exception as e:
+            print(f"[WARNING] Failed to decode JWT token: {str(e)}")
+            
+    return user_id if user_id else 'anonymous'
+
 def lambda_handler(event, context):
     http_method = event.get('httpMethod', '')
-    claims = event.get('requestContext', {}).get('authorizer', {}).get('claims', {})
-    user_id = claims.get('sub', 'anonymous')
+    user_id = get_user_id(event)
     table = get_table(event)
 
     if http_method == 'OPTIONS':
@@ -60,14 +83,13 @@ def lambda_handler(event, context):
 
 def get_order_history(table, user_id):
     try:
-        # Query orders for the user
-        # Note: In a real system, we might use a GSI or just Query if userId is the partition key.
-        # Here userId is the range key, orderId is partition key.
-        # For simplicity in this wizarding example, we'll scan by userId (filtering).
-        # In production this should be a GSI.
-        response = table.scan(
-            FilterExpression=boto3.dynamodb.conditions.Attr('userId').eq(user_id)
-        )
+        # If Admin, scan all orders in the database; otherwise filter by user_id
+        if user_id in ['admin@gmail.com', 'mock-admin-token-12345']:
+            response = table.scan()
+        else:
+            response = table.scan(
+                FilterExpression=boto3.dynamodb.conditions.Attr('userId').eq(user_id)
+            )
         orders = response.get('Items', [])
         # Sort by timestamp descending
         orders.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
@@ -89,11 +111,21 @@ def place_order(table, user_id, body):
         order_id = f"ORDER-{str(uuid.uuid4())[:8].upper()}"
         timestamp = int(time.time())
 
+        # Normalize float prices to Decimal for DynamoDB compatibility
+        safe_items = []
+        for i in cart_items:
+            safe_items.append({
+                'productId': str(i.get('productId', '')),
+                'name': str(i.get('name', '')),
+                'price': decimal.Decimal(str(i.get('price', 0))),
+                'quantity': decimal.Decimal(str(int(i.get('quantity', 1))))
+            })
+
         # 1. Save to DynamoDB
         order_item = {
             'orderId': order_id,
             'userId': user_id,
-            'items': cart_items,
+            'items': safe_items,
             'total': decimal.Decimal(str(total_price)),
             'timestamp': timestamp,
             'status': 'PLACED'
@@ -103,25 +135,29 @@ def place_order(table, user_id, body):
         # 2. Send SNS Notification
         topic_arn = os.environ.get('SNS_TOPIC_ARN')
         if topic_arn:
-            dt_string = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(timestamp))
-            items_list = "\n".join([f"- {i.get('quantity')}x {i.get('name')}" for i in cart_items])
-            
-            message = (
-                f"🧙‍♂️ New Magical Order Placed!\n\n"
-                f"Order ID: {order_id}\n"
-                f"Timestamp: {dt_string} UTC\n"
-                f"---------------------------------\n"
-                f"Products Ordered:\n{items_list}\n"
-                f"---------------------------------\n"
-                f"Total Cost: ₹{total_price}\n\n"
-                f"Customer ID: {user_id}\n\n"
-                f"Check the Ministry Console for details."
-            )
-            sns.publish(
-                TopicArn=topic_arn,
-                Subject=f"Magical Order Success: {order_id}",
-                Message=message
-            )
+            try:
+                dt_string = time.strftime('%Y-%m-%d %H:%M:%S', time.gmtime(timestamp))
+                items_list = "\n".join([f"- {i.get('quantity')}x {i.get('name')}" for i in cart_items])
+                
+                message = (
+                    f"🧙‍♂️ New Magical Order Placed!\n\n"
+                    f"Order ID: {order_id}\n"
+                    f"Timestamp: {dt_string} UTC\n"
+                    f"---------------------------------\n"
+                    f"Products Ordered:\n{items_list}\n"
+                    f"---------------------------------\n"
+                    f"Total Cost: ₹{total_price}\n\n"
+                    f"Customer ID: {user_id}\n\n"
+                    f"Check the Ministry Console for details."
+                )
+                sns.publish(
+                    TopicArn=topic_arn,
+                    Subject=f"Magical Order Success: {order_id}",
+                    Message=message
+                )
+                print(f"[AUDIT] SNS message successfully published for order {order_id}")
+            except Exception as sns_err:
+                print(f"[WARNING] Failed to send SNS notification: {str(sns_err)}")
 
         return respond(201, {
             'message': 'Order placed successfully!',
