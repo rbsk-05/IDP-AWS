@@ -98,7 +98,7 @@ resource "aws_cloudwatch_log_metric_filter" "order_failure" {
 
 # Comprehensive E-Commerce Observability Dashboard
 resource "aws_cloudwatch_dashboard" "ecommerce_dashboard" {
-  dashboard_name = "Ecommerce-Observability-Dashboard"
+  dashboard_name = "darshan-Ecommerce-Observability-Dashboard"
 
   dashboard_body = jsonencode({
     widgets = [

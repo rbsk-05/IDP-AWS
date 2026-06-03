@@ -94,7 +94,7 @@ module "frontend" {
 
 module "cloudfront" {
   source                = "./modules/cloudfront"
-  api_endpoint          = "${aws_api_gateway_rest_api.main.id}.execute-api.ap-southeast-1.amazonaws.com"
+  api_endpoint          = "${aws_api_gateway_rest_api.main.id}.execute-api.${var.region}.amazonaws.com"
   stage_name            = aws_api_gateway_stage.prod.stage_name
   s3_bucket_domain_name = module.frontend.bucket_domain_name
 }
@@ -135,7 +135,7 @@ module "easter" {
 module "observability" {
   source = "./observability"
 
-  aws_region             = "ap-southeast-1"
+  aws_region             = var.region
   api_gateway_id         = aws_api_gateway_rest_api.main.id
   api_gateway_stage_name = "prod"
 

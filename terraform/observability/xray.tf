@@ -1,7 +1,7 @@
 # AWS X-Ray Group for visual trace analysis
 resource "aws_xray_group" "ecommerce" {
   group_name        = "EcommerceApplication"
-  filter_expression = "service(\"tf-darshan-api-gateway\")"
+  filter_expression = "service(\"tf-darshan-*\")"
 }
 
 # AWS X-Ray Sampling Rule: defines rules for tracing a portion of api requests
