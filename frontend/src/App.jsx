@@ -868,6 +868,8 @@ function App() {
             fetchProducts={fetchProducts}
             darkMode={darkMode}
             theme={theme}
+            currentUser={currentUser}
+            getAuthHeaders={getAuthHeaders}
           />
         )}
 

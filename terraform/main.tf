@@ -20,6 +20,7 @@ resource "aws_api_gateway_deployment" "main" {
       module.order.api_integration_hash,
       module.login.api_integration_hash,
       module.bff.api_integration_hash,
+      module.analytics.api_integration_hash,
       timestamp()
     ]))
   }
@@ -34,7 +35,8 @@ resource "aws_api_gateway_deployment" "main" {
     module.search,
     module.easter,
     module.login,
-    module.bff
+    module.bff,
+    module.analytics
   ]
 }
 
@@ -149,7 +151,8 @@ module "observability" {
     "tf-darshan-order-lambda",
     "tf-darshan-users-lambda",
     "tf-darshan-easter-lambda",
-    "tf-darshan-bff-lambda"
+    "tf-darshan-bff-lambda",
+    "tf-darshan-analytics-lambda"
   ]
 
   dynamodb_table_names = [
@@ -185,6 +188,14 @@ module "bff" {
   cart_lambda_name      = module.cart.lambda_name
   order_lambda_arn     = module.order.lambda_arn
   order_lambda_name    = module.order.lambda_name
+}
+
+module "analytics" {
+  source               = "./modules/analytics"
+  api_id               = aws_api_gateway_rest_api.main.id
+  api_root_resource_id = aws_api_gateway_resource.api.id
+  api_execution_arn    = aws_api_gateway_rest_api.main.execution_arn
+  sns_topic_arn        = module.order.topic_arn
 }
 
 moved {
