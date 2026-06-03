@@ -19,7 +19,8 @@ A cloud-native, serverless e-commerce platform built on AWS that enables custome
 13. [DevOps and Unit Testing](#devops-and-unit-testing)
 14. [Future Enhancements](#future-enhancements)
 15. [Learning Outcomes](#learning-outcomes)
-16. [Author](#author)
+16. [Demo Credentials](#demo-credentials)
+17. [Author](#author)
 
 ---
 
@@ -481,6 +482,22 @@ This project demonstrates practical experience in:
 - Full-Stack Application Development
 - Distributed System Design
 - Enterprise Observability, Monitoring, and Logging
+
+---
+
+## Demo Credentials
+
+The platform supports registration of new customer accounts, but the following credentials can be used for demonstration:
+
+### Customer Account
+
+- **Email**: `mdarshan0505@gmail.com`
+- **Password**: `1234567`
+
+### Administrator Account (Fixed)
+
+- **Email**: `admin@gmail.com`
+- **Password**: `1234`
 
 ---
 
