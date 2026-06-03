@@ -34,7 +34,7 @@ resource "aws_cognito_user_pool_client" "client" {
   name         = "tf-darshan-user-pool-client"
   user_pool_id = aws_cognito_user_pool.pool.id
 
-  generate_secret     = false
+  generate_secret = false
   explicit_auth_flows = [
     "ALLOW_USER_PASSWORD_AUTH",
     "ALLOW_REFRESH_TOKEN_AUTH",
@@ -45,6 +45,6 @@ resource "aws_cognito_user_pool_client" "client" {
 resource "aws_api_gateway_authorizer" "cognito" {
   name          = "tf-darshan-cognito-authorizer"
   type          = "COGNITO_USER_POOLS"
-  rest_api_id   = aws_api_gateway_rest_api.main.id
+  rest_api_id   = var.api_id
   provider_arns = [aws_cognito_user_pool.pool.arn]
 }

@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "users" {
-  name           = "tf-darshan-users-table"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "email"
+  name         = "tf-darshan-users-table"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "email"
 
   attribute {
     name = "email"
@@ -10,9 +10,9 @@ resource "aws_dynamodb_table" "users" {
 }
 
 resource "aws_dynamodb_table" "test_users" {
-  name           = "test-darshan-users-table"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "email"
+  name         = "test-darshan-users-table"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "email"
 
   attribute {
     name = "email"
@@ -22,8 +22,8 @@ resource "aws_dynamodb_table" "test_users" {
 
 data "archive_file" "users_lambda" {
   type        = "zip"
-  source_dir  = "../backend/users"
-  output_path = "modules/users_lambda.zip"
+  source_dir  = "${path.module}/../../../backend/users"
+  output_path = "${path.module}/users_lambda.zip"
 }
 
 resource "aws_iam_role" "users_lambda" {
@@ -48,6 +48,11 @@ resource "aws_iam_role_policy_attachment" "users_lambda" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "users_xray" {
+  role       = aws_iam_role.users_lambda.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+}
+
 resource "aws_iam_policy" "users_dynamodb" {
   name = "tf-darshan-users-dynamodb-policy"
 
@@ -63,7 +68,7 @@ resource "aws_iam_policy" "users_dynamodb" {
           "dynamodb:Scan",
           "dynamodb:Query"
         ]
-        Effect   = "Allow"
+        Effect = "Allow"
         Resource = [
           aws_dynamodb_table.users.arn,
           aws_dynamodb_table.test_users.arn
@@ -91,6 +96,10 @@ resource "aws_lambda_function" "users" {
       TABLE_NAME = aws_dynamodb_table.users.name
     }
   }
+
+  tracing_config {
+    mode = "Active"
+  }
 }
 
 resource "aws_lambda_permission" "users" {
@@ -98,24 +107,24 @@ resource "aws_lambda_permission" "users" {
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.users.function_name
   principal     = "apigateway.amazonaws.com"
-  source_arn    = "${aws_api_gateway_rest_api.main.execution_arn}/*/*"
+  source_arn    = "${var.api_execution_arn}/*/*"
 }
 
 resource "aws_api_gateway_resource" "users" {
-  rest_api_id = aws_api_gateway_rest_api.main.id
-  parent_id   = aws_api_gateway_resource.api.id
+  rest_api_id = var.api_id
+  parent_id   = var.api_root_resource_id
   path_part   = "users"
 }
 
 resource "aws_api_gateway_method" "users" {
-  rest_api_id   = aws_api_gateway_rest_api.main.id
+  rest_api_id   = var.api_id
   resource_id   = aws_api_gateway_resource.users.id
   http_method   = "ANY"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "users" {
-  rest_api_id             = aws_api_gateway_rest_api.main.id
+  rest_api_id             = var.api_id
   resource_id             = aws_api_gateway_resource.users.id
   http_method             = aws_api_gateway_method.users.http_method
   integration_http_method = "POST"
@@ -124,24 +133,24 @@ resource "aws_api_gateway_integration" "users" {
 }
 
 resource "aws_api_gateway_method" "users_options" {
-  rest_api_id   = aws_api_gateway_rest_api.main.id
+  rest_api_id   = var.api_id
   resource_id   = aws_api_gateway_resource.users.id
   http_method   = "OPTIONS"
   authorization = "NONE"
 }
 
 resource "aws_api_gateway_integration" "users_options" {
-  rest_api_id             = aws_api_gateway_rest_api.main.id
-  resource_id             = aws_api_gateway_resource.users.id
-  http_method             = aws_api_gateway_method.users_options.http_method
-  type                    = "MOCK"
+  rest_api_id = var.api_id
+  resource_id = aws_api_gateway_resource.users.id
+  http_method = aws_api_gateway_method.users_options.http_method
+  type        = "MOCK"
   request_templates = {
     "application/json" = "{\"statusCode\": 200}"
   }
 }
 
 resource "aws_api_gateway_method_response" "users_options" {
-  rest_api_id = aws_api_gateway_rest_api.main.id
+  rest_api_id = var.api_id
   resource_id = aws_api_gateway_resource.users.id
   http_method = aws_api_gateway_method.users_options.http_method
   status_code = "200"
@@ -153,7 +162,7 @@ resource "aws_api_gateway_method_response" "users_options" {
 }
 
 resource "aws_api_gateway_integration_response" "users_options" {
-  rest_api_id = aws_api_gateway_rest_api.main.id
+  rest_api_id = var.api_id
   resource_id = aws_api_gateway_resource.users.id
   http_method = aws_api_gateway_method.users_options.http_method
   status_code = aws_api_gateway_method_response.users_options.status_code

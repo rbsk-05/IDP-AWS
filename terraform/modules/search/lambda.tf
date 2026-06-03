@@ -9,8 +9,8 @@ resource "aws_iam_role" "lambda_exec" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "lambda.amazonaws.com" }
     }]
   })
@@ -46,6 +46,11 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_xray" {
+  role       = aws_iam_role.lambda_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+}
+
 resource "aws_lambda_function" "function" {
   function_name    = "tf-darshan-search-lambda"
   role             = aws_iam_role.lambda_exec.arn
@@ -58,6 +63,10 @@ resource "aws_lambda_function" "function" {
     variables = {
       TABLE_NAME = "tf-darshan-product-table"
     }
+  }
+
+  tracing_config {
+    mode = "Active"
   }
 }
 

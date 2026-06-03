@@ -136,6 +136,7 @@ def create_product(table, body, event):
         data['userId'] = user_id
         
         table.put_item(Item=data)
+        print(f"[EVENT] Product created: {data['id']}")
         return respond(201, {'message': 'Product created', 'product': data})
     except Exception as e:
         return respond(500, {'error': str(e)})
@@ -164,6 +165,7 @@ def delete_product(table, product_id):
         return respond(500, {'error': 'Table not configured'})
     try:
         table.delete_item(Key={'id': product_id})
+        print(f"[EVENT] Product deleted: {product_id}")
         return respond(200, {'message': 'Product deleted', 'id': product_id})
     except Exception as e:
         return respond(500, {'error': str(e)})

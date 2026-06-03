@@ -1,8 +1,8 @@
 resource "aws_dynamodb_table" "table" {
-  name           = "tf-darshan-order-table"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "orderId"
-  range_key      = "userId"
+  name         = "tf-darshan-order-table"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "orderId"
+  range_key    = "userId"
 
   attribute {
     name = "orderId"
@@ -16,10 +16,10 @@ resource "aws_dynamodb_table" "table" {
 }
 
 resource "aws_dynamodb_table" "test_table" {
-  name           = "test-darshan-order-table"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "orderId"
-  range_key      = "userId"
+  name         = "test-darshan-order-table"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "orderId"
+  range_key    = "userId"
 
   attribute {
     name = "orderId"

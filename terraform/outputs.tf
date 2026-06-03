@@ -22,10 +22,20 @@ output "search_table_name" {
 
 output "cognito_user_pool_id" {
   description = "The ID of the Cognito User Pool"
-  value       = aws_cognito_user_pool.pool.id
+  value       = module.login.user_pool_id
 }
 
 output "cognito_user_pool_client_id" {
   description = "The ID of the Cognito User Pool Client"
-  value       = aws_cognito_user_pool_client.client.id
+  value       = module.login.user_pool_client_id
+}
+
+output "observability_dashboard_arn" {
+  description = "The ARN of the Ecommerce Observability Dashboard"
+  value       = module.observability.dashboard_arn
+}
+
+output "xray_group_arn" {
+  description = "The ARN of the X-Ray Group"
+  value       = module.observability.xray_group_arn
 }

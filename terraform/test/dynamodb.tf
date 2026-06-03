@@ -1,7 +1,7 @@
 resource "aws_dynamodb_table" "test_product_table" {
-  name           = "test-darshan-product-table"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "id"
+  name         = "test-darshan-product-table"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "id"
 
   attribute {
     name = "id"
@@ -10,9 +10,9 @@ resource "aws_dynamodb_table" "test_product_table" {
 }
 
 resource "aws_dynamodb_table" "test_cart_table" {
-  name           = "test-darshan-cart-table"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "userId"
+  name         = "test-darshan-cart-table"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "userId"
 
   attribute {
     name = "userId"
@@ -21,9 +21,9 @@ resource "aws_dynamodb_table" "test_cart_table" {
 }
 
 resource "aws_dynamodb_table" "test_search_table" {
-  name           = "test-darshan-search-table"
-  billing_mode   = "PAY_PER_REQUEST"
-  hash_key       = "searchId"
+  name         = "test-darshan-search-table"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "searchId"
 
   attribute {
     name = "searchId"

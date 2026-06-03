@@ -9,7 +9,7 @@ resource "aws_cloudfront_origin_access_control" "oac" {
 resource "aws_cloudfront_distribution" "cdn" {
   enabled             = true
   default_root_object = "index.html"
-  
+
   origin {
     domain_name              = var.s3_bucket_domain_name
     origin_id                = "S3Frontend"
@@ -20,7 +20,7 @@ resource "aws_cloudfront_distribution" "cdn" {
     domain_name = var.api_endpoint
     origin_id   = "APIGateway"
     origin_path = "/${var.stage_name}"
-    
+
     custom_origin_config {
       http_port              = 80
       https_port             = 443

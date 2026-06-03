@@ -1,6 +1,5 @@
 resource "aws_iam_role" "easter_lambda_role" {
   name = "tf-darshan-easter-lambda-role"
-
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
     Statement = [
@@ -15,6 +14,16 @@ resource "aws_iam_role" "easter_lambda_role" {
   })
 }
 
+resource "aws_iam_role_policy_attachment" "easter_lambda_logs" {
+  role       = aws_iam_role.easter_lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "easter_lambda_xray" {
+  role       = aws_iam_role.easter_lambda_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AWSXrayWriteOnlyAccess"
+}
+
 resource "aws_lambda_function" "easter_lambda" {
   function_name = "tf-darshan-easter-lambda"
   role          = aws_iam_role.easter_lambda_role.arn
@@ -23,6 +32,10 @@ resource "aws_lambda_function" "easter_lambda" {
 
   filename         = "${path.module}/lambda.zip"
   source_code_hash = filebase64sha256("${path.module}/lambda.zip")
+
+  tracing_config {
+    mode = "Active"
+  }
 }
 
 resource "aws_lambda_permission" "apigw_permission" {

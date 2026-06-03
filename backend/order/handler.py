@@ -164,5 +164,5 @@ def place_order(table, user_id, body):
             'orderId': order_id
         })
     except Exception as e:
-        print(f"Error placing order: {str(e)}")
+        print(f"[ERROR] Order placement failed: {str(e)}")
         return respond(500, {'error': str(e)})
