@@ -10,8 +10,8 @@ resource "aws_iam_role" "lambda_exec" {
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Action = "sts:AssumeRole"
-      Effect = "Allow"
+      Action    = "sts:AssumeRole"
+      Effect    = "Allow"
       Principal = { Service = "lambda.amazonaws.com" }
     }]
   })
@@ -28,7 +28,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Action = [
           "lambda:InvokeFunction"
         ]
-        Effect   = "Allow"
+        Effect = "Allow"
         Resource = [
           var.product_lambda_arn,
           var.cart_lambda_arn,

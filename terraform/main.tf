@@ -181,13 +181,13 @@ module "bff" {
   api_id               = aws_api_gateway_rest_api.main.id
   api_root_resource_id = aws_api_gateway_resource.api.id
   api_execution_arn    = aws_api_gateway_rest_api.main.execution_arn
-  
-  product_lambda_arn   = module.product.lambda_arn
-  product_lambda_name  = module.product.lambda_name
-  cart_lambda_arn      = module.cart.lambda_arn
-  cart_lambda_name      = module.cart.lambda_name
-  order_lambda_arn     = module.order.lambda_arn
-  order_lambda_name    = module.order.lambda_name
+
+  product_lambda_arn  = module.product.lambda_arn
+  product_lambda_name = module.product.lambda_name
+  cart_lambda_arn     = module.cart.lambda_arn
+  cart_lambda_name    = module.cart.lambda_name
+  order_lambda_arn    = module.order.lambda_arn
+  order_lambda_name   = module.order.lambda_name
 }
 
 module "analytics" {
