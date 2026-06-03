@@ -44,3 +44,11 @@ override.tf.json
 
 # Generated Terraform lambda packages
 terraform/modules/**/lambda.zip
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
