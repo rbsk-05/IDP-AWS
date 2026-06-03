@@ -87,6 +87,13 @@ The project showcases how modern e-commerce systems can be built using event-dri
 - Parallelized downstream microservice queries to optimize performance.
 - Configurable in-memory product caching with real-time telemetry.
 
+### Analytics & Event Streams
+
+- Real-time ingestion of order placements via Kinesis Firehose streaming.
+- UTC-partitioned S3 data lake storage for order events.
+- Ad-hoc querying via Amazon Athena and AWS Glue Catalog schemas.
+- Interactive PowerBI dashboard integration on the admin portal.
+
 ### DevOps & Unit Testing
 
 - Complete unit testing suite with pytest and moto mocking.
@@ -137,16 +144,19 @@ graph TD
 
 ## AWS Services Used
 
-1. **Amazon S3**: Used for hosting the React frontend and serving static assets.
+1. **Amazon S3**: Used for hosting the React frontend, serving static assets, and storing partitioned order analytics records and Athena query results.
 2. **Amazon CloudFront**: Provides global content delivery, caching, and performance optimization.
 3. **Amazon API Gateway**: Acts as the public entry point for all backend APIs, validating authorization tokens and routing requests to Lambda functions.
-4. **AWS Lambda**: Executes serverless business logic for product management, search, cart operations, user profiles, order processing, and Backend-For-Frontend (BFF) integrations.
+4. **AWS Lambda**: Executes serverless business logic for product management, search, cart operations, user profiles, order processing, analytics queries, and Backend-For-Frontend (BFF) integrations.
 5. **Amazon DynamoDB**: Stores product data, shopping carts, order information, user records, and application state.
 6. **Amazon Cognito**: Manages secure user registration, authentication pools, and authorizer integrations for API Gateway.
-7. **Amazon SNS**: Handles event-driven notifications and order-related messaging workflows.
-8. **Amazon CloudWatch**: Provides comprehensive monitoring, logging, custom metric filters, real-time dashboards, and alarm evaluations.
-9. **AWS X-Ray**: Tracks end-to-end execution paths across API Gateway stage calls and active Lambda traces to construct runtime service maps.
-10. **Terraform**: Manages cloud infrastructure provisioning and deployment through Infrastructure as Code.
+7. **Amazon SNS**: Handles event-driven notifications, order-related messaging workflows, and publishes event data to Kinesis Firehose.
+8. **Amazon Kinesis Data Firehose**: Streams order placements and event records asynchronously from SNS to partitioned S3 destinations.
+9. **Amazon Athena**: Runs ad-hoc SQL aggregation queries on the partitioned S3 JSON files.
+10. **AWS Glue Data Catalog**: Configures and hosts external table schemas and partition metadata for order records.
+11. **Amazon CloudWatch**: Provides comprehensive monitoring, logging, custom metric filters, real-time dashboards, and alarm evaluations.
+12. **AWS X-Ray**: Tracks end-to-end execution paths across API Gateway stage calls and active Lambda traces to construct runtime service maps.
+13. **Terraform**: Manages cloud infrastructure provisioning and deployment through Infrastructure as Code.
 
 ---
 
@@ -312,7 +322,8 @@ The-Diagon-Alley/
 │   ├── search/
 │   ├── order/
 │   ├── users/
-│   └── easteregg/
+│   ├── easteregg/
+│   └── analytics/
 │
 ├── terraform/
 │   ├── modules/
@@ -324,7 +335,8 @@ The-Diagon-Alley/
 │   │   ├── login/
 │   │   ├── frontend/
 │   │   ├── cloudfront/
-│   │   └── easteregg/
+│   │   ├── easteregg/
+│   │   └── analytics/
 │   │
 │   ├── observability/
 │   │   ├── variables.tf
@@ -434,9 +446,9 @@ The unified dashboard `darshan-Ecommerce-Observability-Dashboard` exposes real-t
 
 Quality control, testing isolation, and continuous integration pipeline automation are configured for the Python backend:
 
-1. **Unit Testing Framework**: Tests are written using pytest and moto to mock DynamoDB operations locally, ensuring no calls are made to live AWS environments during test execution.
+1. **Unit Testing Framework**: Tests are written using pytest and moto to mock DynamoDB operations and Athena query executions locally, ensuring no calls are made to live AWS environments during test execution.
 2. **Path and Namespace Isolation**: To prevent pytest from conflating identically named modules (such as handler.py) in different microservices, test suites execute a setup fixture that isolates sys.path and purges the global handler cache before running.
-3. **CI Pipeline Integration**: An automated workflow is defined in GitHub Actions to install Python, provision required testing dependencies (pytest, moto, boto3, pytest-cov, cryptography), and run the tests, validating that code coverage stays above 80% prior to deployment.
+3. **CI Pipeline Integration**: An automated workflow is defined in GitHub Actions to install Python, provision required testing dependencies (pytest, moto, boto3, pytest-cov, cryptography), and run the tests, validating that code coverage stays above 80% (currently 83% overall coverage) prior to deployment.
 
 ---
 
