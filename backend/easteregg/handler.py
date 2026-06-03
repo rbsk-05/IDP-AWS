@@ -2,8 +2,19 @@ import boto3
 import logging
 import json
 import decimal
+import uuid
 
 dynamodb = boto3.resource('dynamodb')
+
+def get_correlation_id(event):
+    request_context = event.get('requestContext', {}) if isinstance(event, dict) else {}
+    correlation_id = request_context.get('requestId')
+    if not correlation_id:
+        headers = {k.lower(): v for k, v in event.get('headers', {}).items()} if isinstance(event, dict) else {}
+        correlation_id = headers.get('x-correlation-id') or headers.get('x-amzn-trace-id')
+        if not correlation_id:
+            correlation_id = "GEN-" + str(uuid.uuid4())[:8]
+    return correlation_id
 
 CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -18,28 +29,28 @@ def respond(status_code, body):
     'body' : json.dumps(body, cls=DecimalEncoder)
   }
 
-def get_table():
-
+def get_table(correlation_id):
   egg_table = dynamodb.Table('tf-darshan-easter-table')
-  print(egg_table)
+  print(f"[AUDIT] [CorrelationID: {correlation_id}] Table: {egg_table.name}")
   return egg_table
 
-def list_products(table):
-
+def list_products(table, correlation_id):
   if not table:
-    logging.error("NO table")
+    print(f"[ERROR] [CorrelationID: {correlation_id}] NO table")
   try:
     res = table.scan()
+    print(f"[EVENT] [CorrelationID: {correlation_id}] Easter eggs scanned, found {len(res.get('Items', []))} items")
     return respond(200, res.get('Items', []))
   except Exception as e:
-    logging.error("ERROR!")
+    print(f"[ERROR] [CorrelationID: {correlation_id}] Easter egg scan failed: {str(e)}")
     return respond(500, {"error" : str(e)})
     
 def lambda_handler(event, context):
   http_method = event.get('httpMethod', '')
-  table = get_table()
+  correlation_id = get_correlation_id(event)
+  table = get_table(correlation_id)
   if http_method == "GET":
-    return list_products(table)
+    return list_products(table, correlation_id)
   return respond(400, {'message': "idk man its wrong"})
 # list_products(get_table)
 

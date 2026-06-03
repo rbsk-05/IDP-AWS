@@ -84,3 +84,4 @@ resource "aws_api_gateway_integration" "post" {
 variable "api_id" {}
 variable "api_root_resource_id" {}
 variable "api_execution_arn" {}
+variable "product_table_name" {}

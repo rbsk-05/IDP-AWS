@@ -1,3 +1,9 @@
+data "archive_file" "lambda_zip" {
+  type        = "zip"
+  source_file = "${path.module}/../../../backend/easteregg/handler.py"
+  output_path = "${path.module}/lambda.zip"
+}
+
 resource "aws_iam_role" "easter_lambda_role" {
   name = "tf-darshan-easter-lambda-role"
   assume_role_policy = jsonencode({
@@ -30,8 +36,8 @@ resource "aws_lambda_function" "easter_lambda" {
   handler       = "handler.lambda_handler"
   runtime       = "python3.12"
 
-  filename         = "${path.module}/lambda.zip"
-  source_code_hash = filebase64sha256("${path.module}/lambda.zip")
+  filename         = data.archive_file.lambda_zip.output_path
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
 
   tracing_config {
     mode = "Active"

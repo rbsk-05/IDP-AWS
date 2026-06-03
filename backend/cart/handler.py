@@ -2,10 +2,22 @@ import json
 import os
 import boto3
 import decimal
+import uuid
 
 dynamodb = boto3.resource('dynamodb')
 
+def get_correlation_id(event):
+    request_context = event.get('requestContext', {}) if isinstance(event, dict) else {}
+    correlation_id = request_context.get('requestId')
+    if not correlation_id:
+        headers = {k.lower(): v for k, v in event.get('headers', {}).items()} if isinstance(event, dict) else {}
+        correlation_id = headers.get('x-correlation-id') or headers.get('x-amzn-trace-id')
+        if not correlation_id:
+            correlation_id = "GEN-" + str(uuid.uuid4())[:8]
+    return correlation_id
+
 def get_table(event):
+    correlation_id = get_correlation_id(event)
     # Support dynamic table switching for isolated testing
     # Check headers case-insensitively
     headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
@@ -16,9 +28,9 @@ def get_table(event):
     if is_test:
         target_table = prod_table_name.replace('tf-', 'test-')
         
-    print(f"[AUDIT] Headers: {headers}")
-    print(f"[AUDIT] Test Mode: {is_test}")
-    print(f"[AUDIT] Target Table: {target_table}")
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Headers: {headers}")
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Test Mode: {is_test}")
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Target Table: {target_table}")
     
     return dynamodb.Table(target_table)
 
@@ -69,19 +81,20 @@ def lambda_handler(event, context):
     http_method = event.get('httpMethod', '')
     user_id = get_user_id(event)
     table = get_table(event)
+    correlation_id = get_correlation_id(event)
 
     if http_method == 'OPTIONS':
         return respond(200, {'message': 'ok'})
     if http_method == 'GET':
-        return get_cart(table, user_id)
+        return get_cart(table, user_id, correlation_id)
     elif http_method in ['POST', 'PUT']:
-        return update_cart(table, user_id, event.get('body'))
+        return update_cart(table, user_id, event.get('body'), correlation_id)
     elif http_method == 'DELETE':
-        return delete_cart(table, user_id, event.get('body'))
+        return delete_cart(table, user_id, event.get('body'), correlation_id)
 
     return respond(400, {'message': f'Unsupported method {http_method}'})
 
-def get_cart(table, user_id):
+def get_cart(table, user_id, correlation_id):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:
@@ -100,9 +113,10 @@ def get_cart(table, user_id):
             return respond(200, {'userId': user_id, 'items': normalized_items})
         return respond(200, {'userId': user_id, 'items': []})
     except Exception as e:
+        print(f"[ERROR] [CorrelationID: {correlation_id}] Get cart failed: {str(e)}")
         return respond(500, {'error': str(e)})
 
-def update_cart(table, user_id, body):
+def update_cart(table, user_id, body, correlation_id):
     if not table or not body:
         return respond(400, {'error': 'Bad request - body required'})
     try:
@@ -123,11 +137,13 @@ def update_cart(table, user_id, body):
             'userId': user_id,
             'items': safe_items
         })
+        print(f"[EVENT] [CorrelationID: {correlation_id}] Cart updated for user {user_id} with {len(safe_items)} items")
         return respond(200, {'message': 'Cart updated', 'itemCount': len(safe_items)})
     except Exception as e:
+        print(f"[ERROR] [CorrelationID: {correlation_id}] Update cart failed: {str(e)}")
         return respond(500, {'error': str(e)})
 
-def delete_cart(table, user_id, body=None):
+def delete_cart(table, user_id, body, correlation_id):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:
@@ -139,9 +155,12 @@ def delete_cart(table, user_id, body=None):
                 items = current.get('items', [])
                 filtered_items = [i for i in items if str(i.get('productId')) != str(product_id)]
                 table.put_item(Item={'userId': user_id, 'items': filtered_items})
+                print(f"[EVENT] [CorrelationID: {correlation_id}] Item {product_id} removed from user {user_id} cart")
                 return respond(200, {'message': 'Item removed', 'itemCount': len(filtered_items)})
 
         table.delete_item(Key={'userId': user_id})
+        print(f"[EVENT] [CorrelationID: {correlation_id}] Cart cleared for user {user_id}")
         return respond(200, {'message': 'Cart cleared', 'itemCount': 0})
     except Exception as e:
+        print(f"[ERROR] [CorrelationID: {correlation_id}] Delete cart failed: {str(e)}")
         return respond(500, {'error': str(e)})

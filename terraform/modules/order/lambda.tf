@@ -67,8 +67,9 @@ resource "aws_lambda_function" "function" {
 
   environment {
     variables = {
-      TABLE_NAME    = aws_dynamodb_table.table.name
-      SNS_TOPIC_ARN = aws_sns_topic.topic.arn
+      TABLE_NAME         = aws_dynamodb_table.table.name
+      PRODUCT_TABLE_NAME = var.product_table_name
+      SNS_TOPIC_ARN      = aws_sns_topic.topic.arn
     }
   }
 

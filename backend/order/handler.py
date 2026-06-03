@@ -8,7 +8,18 @@ import uuid
 dynamodb = boto3.resource('dynamodb')
 sns = boto3.client('sns')
 
+def get_correlation_id(event):
+    request_context = event.get('requestContext', {}) if isinstance(event, dict) else {}
+    correlation_id = request_context.get('requestId')
+    if not correlation_id:
+        headers = {k.lower(): v for k, v in event.get('headers', {}).items()} if isinstance(event, dict) else {}
+        correlation_id = headers.get('x-correlation-id') or headers.get('x-amzn-trace-id')
+        if not correlation_id:
+            correlation_id = "GEN-" + str(uuid.uuid4())[:8]
+    return correlation_id
+
 def get_table(event):
+    correlation_id = get_correlation_id(event)
     # Support dynamic table switching for isolated testing
     headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
     is_test = headers.get('x-test-suite') == 'true'
@@ -18,10 +29,23 @@ def get_table(event):
     if is_test:
         target_table = prod_table_name.replace('tf-', 'test-')
     
-    print(f"[AUDIT] Headers: {headers}")
-    print(f"[AUDIT] Test Mode: {is_test}")
-    print(f"[AUDIT] Target Table: {target_table}")
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Headers: {headers}")
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Test Mode: {is_test}")
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Target Table: {target_table}")
     
+    return dynamodb.Table(target_table)
+
+def get_product_table(event):
+    correlation_id = get_correlation_id(event)
+    headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
+    is_test = headers.get('x-test-suite') == 'true'
+    prod_table_name = os.environ.get('PRODUCT_TABLE_NAME', 'tf-darshan-product-table')
+    
+    target_table = prod_table_name
+    if is_test:
+        target_table = prod_table_name.replace('tf-', 'test-')
+        
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Target Product Table: {target_table}")
     return dynamodb.Table(target_table)
 
 CORS_HEADERS = {
@@ -71,17 +95,18 @@ def lambda_handler(event, context):
     http_method = event.get('httpMethod', '')
     user_id = get_user_id(event)
     table = get_table(event)
+    correlation_id = get_correlation_id(event)
 
     if http_method == 'OPTIONS':
         return respond(200, {'message': 'ok'})
     if http_method == 'GET':
-        return get_order_history(table, user_id)
+        return get_order_history(table, user_id, correlation_id)
     elif http_method == 'POST':
-        return place_order(table, user_id, event.get('body'))
+        return place_order(table, user_id, event, correlation_id)
 
     return respond(400, {'message': f'Unsupported method {http_method}'})
 
-def get_order_history(table, user_id):
+def get_order_history(table, user_id, correlation_id):
     try:
         # If Admin, scan all orders in the database; otherwise filter by user_id
         if user_id in ['admin@gmail.com', 'mock-admin-token-12345']:
@@ -95,9 +120,11 @@ def get_order_history(table, user_id):
         orders.sort(key=lambda x: x.get('timestamp', 0), reverse=True)
         return respond(200, orders)
     except Exception as e:
+        print(f"[ERROR] [CorrelationID: {correlation_id}] Get order history failed: {str(e)}")
         return respond(500, {'error': str(e)})
 
-def place_order(table, user_id, body):
+def place_order(table, user_id, event, correlation_id):
+    body = event.get('body')
     if not body:
         return respond(400, {'error': 'Body required'})
     try:
@@ -121,18 +148,55 @@ def place_order(table, user_id, body):
                 'quantity': decimal.Decimal(str(int(i.get('quantity', 1))))
             })
 
-        # 1. Save to DynamoDB
-        order_item = {
-            'orderId': order_id,
-            'userId': user_id,
-            'items': safe_items,
-            'total': decimal.Decimal(str(total_price)),
-            'timestamp': timestamp,
-            'status': 'PLACED'
-        }
-        table.put_item(Item=order_item)
+        # 1. Update Product Inventory with Stock Rollback
+        product_table = get_product_table(event)
+        successful_decrements = []
 
-        # 2. Send SNS Notification
+        try:
+            for item in safe_items:
+                pid = item['productId']
+                qty = item['quantity']
+                name = item['name']
+                
+                try:
+                    product_table.update_item(
+                        Key={'id': pid},
+                        UpdateExpression="SET stock = stock - :qty",
+                        ConditionExpression="stock >= :qty",
+                        ExpressionAttributeValues={':qty': qty}
+                    )
+                    successful_decrements.append((pid, qty))
+                except dynamodb.meta.client.exceptions.ConditionalCheckFailedException:
+                    raise Exception(f"Insufficient stock or product not found for item: {name} ({pid})")
+                except Exception as e:
+                    raise Exception(f"Failed to update stock for item {name}: {str(e)}")
+
+            # 2. Save to DynamoDB
+            order_item = {
+                'orderId': order_id,
+                'userId': user_id,
+                'items': safe_items,
+                'total': decimal.Decimal(str(total_price)),
+                'timestamp': timestamp,
+                'status': 'PLACED'
+            }
+            table.put_item(Item=order_item)
+
+        except Exception as checkout_err:
+            # ROLLBACK PHASE: Add back the quantities we decremented
+            print(f"[ROLLBACK] [CorrelationID: {correlation_id}] Order checkout failed. Rolling back stock for successfully updated products: {successful_decrements}")
+            for pid, qty in successful_decrements:
+                try:
+                    product_table.update_item(
+                        Key={'id': pid},
+                        UpdateExpression="SET stock = stock + :qty",
+                        ExpressionAttributeValues={':qty': qty}
+                    )
+                except Exception as rollback_err:
+                    print(f"[FATAL] [CorrelationID: {correlation_id}] Stock rollback failed for product {pid}: {str(rollback_err)}")
+            raise checkout_err
+
+        # 3. Send SNS Notification
         topic_arn = os.environ.get('SNS_TOPIC_ARN')
         if topic_arn:
             try:
@@ -155,14 +219,14 @@ def place_order(table, user_id, body):
                     Subject=f"Magical Order Success: {order_id}",
                     Message=message
                 )
-                print(f"[AUDIT] SNS message successfully published for order {order_id}")
+                print(f"[AUDIT] [CorrelationID: {correlation_id}] SNS message successfully published for order {order_id}")
             except Exception as sns_err:
-                print(f"[WARNING] Failed to send SNS notification: {str(sns_err)}")
+                print(f"[WARNING] [CorrelationID: {correlation_id}] Failed to send SNS notification: {str(sns_err)}")
 
         return respond(201, {
             'message': 'Order placed successfully!',
             'orderId': order_id
         })
     except Exception as e:
-        print(f"[ERROR] Order placement failed: {str(e)}")
+        print(f"[ERROR] [CorrelationID: {correlation_id}] Order placement failed: {str(e)}")
         return respond(500, {'error': str(e)})

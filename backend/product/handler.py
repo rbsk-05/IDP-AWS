@@ -6,8 +6,19 @@ import uuid
 
 dynamodb = boto3.resource('dynamodb')
 
+def get_correlation_id(event):
+    request_context = event.get('requestContext', {}) if isinstance(event, dict) else {}
+    correlation_id = request_context.get('requestId')
+    if not correlation_id:
+        headers = {k.lower(): v for k, v in event.get('headers', {}).items()} if isinstance(event, dict) else {}
+        correlation_id = headers.get('x-correlation-id') or headers.get('x-amzn-trace-id')
+        if not correlation_id:
+            correlation_id = "GEN-" + str(uuid.uuid4())[:8]
+    return correlation_id
+
 #FUNCTION TO GET THE TABLE
 def get_table(event):
+    correlation_id = get_correlation_id(event)
     # Support dynamic table switching for isolated testing
     # Check headers case-insensitively
     headers = {k.lower(): v for k, v in event.get('headers', {}).items()}
@@ -19,9 +30,9 @@ def get_table(event):
         # Switch tf- to test-
         target_table = prod_table_name.replace('tf-', 'test-')
     
-    print(f"[AUDIT] Headers: {headers}")
-    print(f"[AUDIT] Test Mode: {is_test}")
-    print(f"[AUDIT] Target Table: {target_table}")
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Headers: {headers}")
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Test Mode: {is_test}")
+    print(f"[AUDIT] [CorrelationID: {correlation_id}] Target Table: {target_table}")
     
     return dynamodb.Table(target_table)
 
@@ -72,25 +83,26 @@ def lambda_handler(event, context):
     http_method = event.get('httpMethod', '')
     path_parameters = event.get('pathParameters') or {}
     table = get_table(event)
+    correlation_id = get_correlation_id(event)
     
     # Handle preflight CORS
     if http_method == 'OPTIONS':
         return respond(200, {'message': 'ok'})
 
     if http_method == 'GET' and 'id' in path_parameters:
-        return get_product(table, path_parameters['id'])
+        return get_product(table, path_parameters['id'], correlation_id)
     elif http_method == 'DELETE' and 'id' in path_parameters:
-        return delete_product(table, path_parameters['id'])
+        return delete_product(table, path_parameters['id'], correlation_id)
     elif http_method in ['PUT', 'PATCH'] and 'id' in path_parameters:
-        return update_product(table, path_parameters['id'], event.get('body'), event)
+        return update_product(table, path_parameters['id'], event.get('body'), event, correlation_id)
     elif http_method == 'GET':
-        return list_products(table, event)
+        return list_products(table, event, correlation_id)
     elif http_method == 'POST':
-        return create_product(table, event.get('body'), event)
+        return create_product(table, event.get('body'), event, correlation_id)
 
     return respond(400, {'message': f'Unsupported method {http_method}'})
 
-def get_product(table, product_id):
+def get_product(table, product_id, correlation_id):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:
@@ -99,9 +111,10 @@ def get_product(table, product_id):
             return respond(200, response['Item'])
         return respond(404, {'message': 'Product not found'})
     except Exception as e:
+        print(f"[ERROR] [CorrelationID: {correlation_id}] Get product failed: {str(e)}")
         return respond(500, {'error': str(e)})
 
-def list_products(table, event):
+def list_products(table, event, correlation_id):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:
@@ -122,9 +135,10 @@ def list_products(table, event):
         ]
         return respond(200, filtered)
     except Exception as e:
+        print(f"[ERROR] [CorrelationID: {correlation_id}] List products failed: {str(e)}")
         return respond(500, {'error': str(e)})
 
-def create_product(table, body, event):
+def create_product(table, body, event, correlation_id):
     if not table or not body:
         return respond(400, {'error': 'Bad request - body required'})
     try:
@@ -136,12 +150,13 @@ def create_product(table, body, event):
         data['userId'] = user_id
         
         table.put_item(Item=data)
-        print(f"[EVENT] Product created: {data['id']}")
+        print(f"[EVENT] [CorrelationID: {correlation_id}] Product created: {data['id']}")
         return respond(201, {'message': 'Product created', 'product': data})
     except Exception as e:
+        print(f"[ERROR] [CorrelationID: {correlation_id}] Product creation failed: {str(e)}")
         return respond(500, {'error': str(e)})
 
-def update_product(table, product_id, body, event):
+def update_product(table, product_id, body, event, correlation_id):
     if not table or not body:
         return respond(400, {'error': 'Bad request - body required'})
     try:
@@ -156,16 +171,19 @@ def update_product(table, product_id, body, event):
             data['userId'] = user_id
             
         table.put_item(Item=data)
+        print(f"[EVENT] [CorrelationID: {correlation_id}] Product updated: {product_id}")
         return respond(200, {'message': 'Product updated', 'product': data})
     except Exception as e:
+        print(f"[ERROR] [CorrelationID: {correlation_id}] Product update failed: {str(e)}")
         return respond(500, {'error': str(e)})
 
-def delete_product(table, product_id):
+def delete_product(table, product_id, correlation_id):
     if not table:
         return respond(500, {'error': 'Table not configured'})
     try:
         table.delete_item(Key={'id': product_id})
-        print(f"[EVENT] Product deleted: {product_id}")
+        print(f"[EVENT] [CorrelationID: {correlation_id}] Product deleted: {product_id}")
         return respond(200, {'message': 'Product deleted', 'id': product_id})
     except Exception as e:
+        print(f"[ERROR] [CorrelationID: {correlation_id}] Product deletion failed: {str(e)}")
         return respond(500, {'error': str(e)})
