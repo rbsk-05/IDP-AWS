@@ -96,6 +96,36 @@ resource "aws_cloudwatch_log_metric_filter" "order_failure" {
   depends_on = [aws_cloudwatch_log_group.lambda_logs]
 }
 
+# 7. Custom Metric Filter: BFF Cache Hits
+resource "aws_cloudwatch_log_metric_filter" "bff_cache_hit" {
+  name           = "bff-cache-hits"
+  pattern        = "\"[METRIC]\" \"CacheHit=1\""
+  log_group_name = "/aws/lambda/${var.bff_lambda_name}"
+
+  metric_transformation {
+    name      = "BFFCacheHitCount"
+    namespace = "EcommerceObservability"
+    value     = "1"
+  }
+
+  depends_on = [aws_cloudwatch_log_group.lambda_logs]
+}
+
+# 8. Custom Metric Filter: BFF Cache Misses
+resource "aws_cloudwatch_log_metric_filter" "bff_cache_miss" {
+  name           = "bff-cache-misses"
+  pattern        = "\"[METRIC]\" \"CacheMiss=1\""
+  log_group_name = "/aws/lambda/${var.bff_lambda_name}"
+
+  metric_transformation {
+    name      = "BFFCacheMissCount"
+    namespace = "EcommerceObservability"
+    value     = "1"
+  }
+
+  depends_on = [aws_cloudwatch_log_group.lambda_logs]
+}
+
 # Comprehensive E-Commerce Observability Dashboard
 resource "aws_cloudwatch_dashboard" "ecommerce_dashboard" {
   dashboard_name = "darshan-Ecommerce-Observability-Dashboard"
@@ -301,6 +331,26 @@ resource "aws_cloudwatch_dashboard" "ecommerce_dashboard" {
           stacked = false
           region  = var.aws_region
           title   = "Order Placement Failures"
+          stat    = "Sum"
+          period  = 60
+        }
+      },
+      # ROW 5: BFF Caching Performance
+      {
+        type   = "metric"
+        x      = 0
+        y      = 24
+        width  = 24
+        height = 6
+        properties = {
+          metrics = [
+            ["EcommerceObservability", "BFFCacheHitCount", { "label" : "Cache Hits" }],
+            ["EcommerceObservability", "BFFCacheMissCount", { "label" : "Cache Misses" }]
+          ]
+          view    = "timeSeries"
+          stacked = false
+          region  = var.aws_region
+          title   = "BFF Cache Performance"
           stat    = "Sum"
           period  = 60
         }

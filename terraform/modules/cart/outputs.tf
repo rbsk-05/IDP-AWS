@@ -16,3 +16,13 @@ output "api_integration_hash" {
     aws_api_gateway_integration_response.options.id
   ]))
 }
+
+output "lambda_arn" {
+  value       = aws_lambda_function.function.arn
+  description = "Cart Lambda Function ARN"
+}
+
+output "lambda_name" {
+  value       = aws_lambda_function.function.function_name
+  description = "Cart Lambda Function Name"
+}

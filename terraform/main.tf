@@ -19,6 +19,7 @@ resource "aws_api_gateway_deployment" "main" {
       module.search.api_integration_hash,
       module.order.api_integration_hash,
       module.login.api_integration_hash,
+      module.bff.api_integration_hash,
       timestamp()
     ]))
   }
@@ -32,7 +33,8 @@ resource "aws_api_gateway_deployment" "main" {
     module.cart,
     module.search,
     module.easter,
-    module.login
+    module.login,
+    module.bff
   ]
 }
 
@@ -146,7 +148,8 @@ module "observability" {
     "tf-darshan-search-lambda",
     "tf-darshan-order-lambda",
     "tf-darshan-users-lambda",
-    "tf-darshan-easter-lambda"
+    "tf-darshan-easter-lambda",
+    "tf-darshan-bff-lambda"
   ]
 
   dynamodb_table_names = [
@@ -160,6 +163,7 @@ module "observability" {
 
   product_lambda_name = "tf-darshan-product-lambda"
   order_lambda_name   = "tf-darshan-order-lambda"
+  bff_lambda_name     = "tf-darshan-bff-lambda"
 }
 
 module "login" {
@@ -167,6 +171,20 @@ module "login" {
   api_id               = aws_api_gateway_rest_api.main.id
   api_root_resource_id = aws_api_gateway_resource.api.id
   api_execution_arn    = aws_api_gateway_rest_api.main.execution_arn
+}
+
+module "bff" {
+  source               = "./modules/bff"
+  api_id               = aws_api_gateway_rest_api.main.id
+  api_root_resource_id = aws_api_gateway_resource.api.id
+  api_execution_arn    = aws_api_gateway_rest_api.main.execution_arn
+  
+  product_lambda_arn   = module.product.lambda_arn
+  product_lambda_name  = module.product.lambda_name
+  cart_lambda_arn      = module.cart.lambda_arn
+  cart_lambda_name      = module.cart.lambda_name
+  order_lambda_arn     = module.order.lambda_arn
+  order_lambda_name    = module.order.lambda_name
 }
 
 moved {

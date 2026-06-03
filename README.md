@@ -2,6 +2,25 @@
 
 A cloud-native, serverless e-commerce platform built on AWS that enables customers to browse products, search inventory, manage shopping carts, and place orders through a modern web application. The platform leverages fully managed AWS services and Infrastructure as Code (IaC) to deliver scalability, reliability, security, and operational efficiency without managing traditional servers.
 
+## Table of Contents
+
+1. [Overview](#overview)
+2. [Key Features](#key-features)
+3. [System Architecture](#system-architecture)
+4. [Request Flow](#request-flow)
+5. [AWS Services Used](#aws-services-used)
+6. [Core Services](#core-services)
+7. [API Overview](#api-overview)
+8. [Infrastructure as Code](#infrastructure-as-code)
+9. [Repository Structure](#repository-structure)
+10. [Scalability and Reliability](#scalability-and-reliability)
+11. [Security Considerations](#security-considerations)
+12. [Monitoring and Observability](#monitoring-and-observability)
+13. [DevOps and Unit Testing](#devops-and-unit-testing)
+14. [Future Enhancements](#future-enhancements)
+15. [Learning Outcomes](#learning-outcomes)
+16. [Author](#author)
+
 ---
 
 ## Overview
@@ -62,6 +81,18 @@ The project showcases how modern e-commerce systems can be built using event-dri
 - Modular infrastructure design
 - Repeatable and consistent deployments
 
+### Backend For Frontend (BFF) & Caching
+
+- Single-request aggregation for shop view and user dashboard.
+- Parallelized downstream microservice queries to optimize performance.
+- Configurable in-memory product caching with real-time telemetry.
+
+### DevOps & Unit Testing
+
+- Complete unit testing suite with pytest and moto mocking.
+- Automated linting, verification, and testing in the GitHub Actions CI pipeline.
+- Python environment cleanups and isolation for concurrent test runs.
+
 ---
 
 ## System Architecture
@@ -72,53 +103,20 @@ The application follows a serverless architecture built entirely on AWS managed 
 
 ```mermaid
 graph TD
-    Client[React Frontend / Client] -->|HTTPS Requests| CloudFront[Amazon CloudFront]
-    CloudFront -->|Static Files / SPA| S3[Amazon S3]
-    Client -->|API Calls / Auth| APIGateway[Amazon API Gateway Stage: prod]
+    Client[React Frontend] -->|1. Authenticate & Obtain JWT| Cognito[Amazon Cognito User Pool]
+    Client -->|2. Send Authorized Request| APIGateway[Amazon API Gateway]
     
-    subgraph Authentication
-        APIGateway -->|Cognito Authorizer| CognitoPool[Amazon Cognito User Pool]
-        CognitoPool -->|Validates JWT| APIGateway
-    end
-
-    subgraph Observability [AWS Observability Framework]
-        APIGateway -->|API GW Access Logs| CWLogs[CloudWatch Logs / Metric Filters]
-        APIGateway -->|End-to-End Tracing| XRay[AWS X-Ray Group: EcommerceApplication]
-    end
-
-    subgraph Microservices [AWS Lambda Functions]
-        APIGateway -.->|Routes Request| UsersService[Users Lambda]
-        APIGateway -.->|Routes Request| ProductService[Product Lambda]
-        APIGateway -.->|Routes Request| SearchService[Search Lambda]
-        APIGateway -.->|Routes Request| CartService[Cart Lambda]
-        APIGateway -.->|Routes Request| OrderService[Order Lambda]
-        APIGateway -.->|Routes Request| EasterEggService[EasterEgg Lambda]
+    subgraph Services & Databases
+        APIGateway -->|Route Profile Request| UsersLambda[Users Lambda] --> UsersTable[(DynamoDB Users Table)]
+        APIGateway -->|Route Search Request| SearchLambda[Search Lambda] --> ProductTable[(DynamoDB Product Table)]
+        APIGateway -->|Route Catalog Request| ProductLambda[Product Lambda] --> ProductTable
+        APIGateway -->|Route Cart Request| CartLambda[Cart Lambda] --> CartTable[(DynamoDB Cart Table)]
+        APIGateway -->|Route Checkout Request| OrderLambda[Order Lambda]
         
-        UsersService -.->|Active Tracing & Logs| XRay
-        ProductService -.->|Active Tracing & Logs| XRay
-        SearchService -.->|Active Tracing & Logs| XRay
-        CartService -.->|Active Tracing & Logs| XRay
-        OrderService -.->|Active Tracing & Logs| XRay
-        EasterEggService -.->|Active Tracing & Logs| XRay
-
-        UsersService -.->|Structured Exec Logs| CWLogs
-        ProductService -.->|Structured Exec Logs| CWLogs
-        SearchService -.->|Structured Exec Logs| CWLogs
-        CartService -.->|Structured Exec Logs| CWLogs
-        OrderService -.->|Structured Exec Logs| CWLogs
-        EasterEggService -.->|Structured Exec Logs| CWLogs
+        OrderLambda --> OrderTable[(DynamoDB Order Table)]
+        OrderLambda -->|Validate & Decrement Stock| ProductTable
+        OrderLambda -->|Publish Order Events| SNSTopic[Amazon SNS Topic]
     end
-
-    subgraph Database [Storage & Event Pub/Sub]
-        UsersService -->|Read/Write| UsersTable[(DynamoDB Users Table)]
-        ProductService -->|Read/Write| ProductTable[(DynamoDB Product Table)]
-        CartService -->|Read/Write| CartTable[(DynamoDB Cart Table)]
-        OrderService -->|Read/Write| OrderTable[(DynamoDB Order Table)]
-        OrderService -->|Publish Events| SNSTopic[Amazon SNS Order Notifications]
-    end
-
-    CWLogs -->|Metric Data| CWDashboard[CloudWatch Dashboard: darshan-Ecommerce-Observability-Dashboard]
-    CWLogs -->|Alarms Trigger| CWAlarms[CloudWatch Alarms: darshan-xxx]
 ```
 
 ---
@@ -139,45 +137,16 @@ graph TD
 
 ## AWS Services Used
 
-### Amazon S3
-
-Used for hosting the React frontend and serving static assets.
-
-### Amazon CloudFront
-
-Provides global content delivery, caching, and performance optimization.
-
-### Amazon API Gateway
-
-Acts as the public entry point for all backend APIs, validating authorization tokens and routing requests to Lambda functions.
-
-### AWS Lambda
-
-Executes serverless business logic for product management, search, cart operations, user profiles, and order processing.
-
-### Amazon DynamoDB
-
-Stores product data, shopping carts, order information, user records, and application state.
-
-### Amazon Cognito
-
-Manages secure user registration, authentication pools, and authorizer integrations for API Gateway.
-
-### Amazon SNS
-
-Handles event-driven notifications and order-related messaging workflows.
-
-### Amazon CloudWatch
-
-Provides comprehensive monitoring, logging, custom metric filters, real-time dashboards, and alarm evaluations.
-
-### AWS X-Ray
-
-Tracks end-to-end execution paths across API Gateway stage calls and active Lambda traces to construct runtime service maps.
-
-### Terraform
-
-Manages cloud infrastructure provisioning and deployment through Infrastructure as Code.
+1. **Amazon S3**: Used for hosting the React frontend and serving static assets.
+2. **Amazon CloudFront**: Provides global content delivery, caching, and performance optimization.
+3. **Amazon API Gateway**: Acts as the public entry point for all backend APIs, validating authorization tokens and routing requests to Lambda functions.
+4. **AWS Lambda**: Executes serverless business logic for product management, search, cart operations, user profiles, order processing, and Backend-For-Frontend (BFF) integrations.
+5. **Amazon DynamoDB**: Stores product data, shopping carts, order information, user records, and application state.
+6. **Amazon Cognito**: Manages secure user registration, authentication pools, and authorizer integrations for API Gateway.
+7. **Amazon SNS**: Handles event-driven notifications and order-related messaging workflows.
+8. **Amazon CloudWatch**: Provides comprehensive monitoring, logging, custom metric filters, real-time dashboards, and alarm evaluations.
+9. **AWS X-Ray**: Tracks end-to-end execution paths across API Gateway stage calls and active Lambda traces to construct runtime service maps.
+10. **Terraform**: Manages cloud infrastructure provisioning and deployment through Infrastructure as Code.
 
 ---
 
@@ -251,6 +220,19 @@ Provides auxiliary application functionality and testing workflows.
 
 ---
 
+### Backend For Frontend (BFF) Service
+
+Acts as the single point of contact for client applications to aggregate multiple downstream API responses.
+
+**Capabilities**
+
+- Aggregated shop queries (GET /api/shop) returning catalog and cart items in a single call.
+- Aggregated dashboard queries (GET /api/bff/dashboard) merging order history with item details.
+- Multi-threaded parallel Lambda fetches via boto3.
+- In-memory cache layer with TTL environment variable.
+
+---
+
 ## API Overview
 
 ### Login and User APIs
@@ -285,6 +267,11 @@ Provides auxiliary application functionality and testing workflows.
 
 - Application utility endpoints
 
+### BFF APIs
+
+- Get shop aggregation: GET /api/shop
+- Get dashboard aggregation: GET /api/bff/dashboard
+
 ---
 
 ## Infrastructure as Code
@@ -298,6 +285,7 @@ All cloud resources are provisioned and managed using Terraform.
 - Search Module
 - Cart Module
 - Order Module
+- BFF Module (BFF Lambda and aggregated endpoints)
 - Frontend Module
 - CloudFront Module
 - Utility Module
@@ -318,6 +306,7 @@ The-Diagon-Alley/
 │   └── dist/
 │
 ├── backend/
+│   ├── bff/
 │   ├── product/
 │   ├── cart/
 │   ├── search/
@@ -327,6 +316,7 @@ The-Diagon-Alley/
 │
 ├── terraform/
 │   ├── modules/
+│   │   ├── bff/
 │   │   ├── product/
 │   │   ├── cart/
 │   │   ├── search/
@@ -411,6 +401,7 @@ Operational visibility, alerting, and end-to-end tracing are implemented using a
 - **API Gateway Error Rates**: Monitors HTTP 4XX and 5XX responses from API access logs.
 - **Product Operations**: Tracks product creation and deletion events from the catalog logs.
 - **Order Processing Failures**: Captures order failure messages to monitor database or notification issues.
+- **BFF Cache Performance**: Extracts BFFCacheHitCount and BFFCacheMissCount from log patterns.
 
 ### Enterprise Alarms
 
@@ -430,11 +421,22 @@ The unified dashboard `darshan-Ecommerce-Observability-Dashboard` exposes real-t
 - **Performance Metrics**: Average and p95 API Gateway latency.
 - **Lambda Performance**: Invocations, error counts, and average run duration across all Lambda functions.
 - **Database Metrics**: Consumed read/write capacity units and write throttle alerts on the order database.
+- **BFF Cache Performance**: Plots BFF cache hit and miss events over time.
 
 ### Distributed Tracing (AWS X-Ray)
 
 - **End-to-End Traces**: API Gateway propagates headers down to Lambda functions, providing active distributed tracing.
 - **Application Trace Group**: Traces are aggregated under the `EcommerceApplication` X-Ray group using the filter expression `service("tf-darshan-*")` to map the interactive path between APIs, Lambdas, and DynamoDB.
+
+---
+
+## DevOps and Unit Testing
+
+Quality control, testing isolation, and continuous integration pipeline automation are configured for the Python backend:
+
+1. **Unit Testing Framework**: Tests are written using pytest and moto to mock DynamoDB operations locally, ensuring no calls are made to live AWS environments during test execution.
+2. **Path and Namespace Isolation**: To prevent pytest from conflating identically named modules (such as handler.py) in different microservices, test suites execute a setup fixture that isolates sys.path and purges the global handler cache before running.
+3. **CI Pipeline Integration**: An automated workflow is defined in GitHub Actions to install Python, provision required testing dependencies (pytest, moto, boto3, pytest-cov, cryptography), and run the tests, validating that code coverage stays above 80% prior to deployment.
 
 ---
 

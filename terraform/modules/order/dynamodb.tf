@@ -35,3 +35,13 @@ resource "aws_dynamodb_table" "test_table" {
 output "table_name" {
   value = aws_dynamodb_table.table.name
 }
+
+output "lambda_arn" {
+  value       = aws_lambda_function.function.arn
+  description = "Order Lambda Function ARN"
+}
+
+output "lambda_name" {
+  value       = aws_lambda_function.function.function_name
+  description = "Order Lambda Function Name"
+}

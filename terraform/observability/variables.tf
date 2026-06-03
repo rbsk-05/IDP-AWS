@@ -33,3 +33,9 @@ variable "product_lambda_name" {
   type        = string
   description = "The name of the product Lambda function"
 }
+
+variable "bff_lambda_name" {
+  type        = string
+  description = "The name of the BFF Lambda function"
+  default     = "tf-darshan-bff-lambda"
+}

@@ -23,3 +23,13 @@ output "api_integration_hash" {
     aws_api_gateway_integration_response.options_id.id
   ]))
 }
+
+output "lambda_arn" {
+  value       = aws_lambda_function.function.arn
+  description = "Product Lambda Function ARN"
+}
+
+output "lambda_name" {
+  value       = aws_lambda_function.function.function_name
+  description = "Product Lambda Function Name"
+}
